@@ -1,0 +1,1819 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veo 3 — داشبورد العملاء v5</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#F4F6F9;--surface:#FFFFFF;--surface-2:#F8F9FB;--surface-3:#EFF1F5;
+  --border:#E4E7ED;--border-2:#D0D5DE;--text-1:#0F1623;--text-2:#4A5568;--text-3:#9AA5B4;
+  --accent:#4F5FF0;--accent-dk:#3D4ED4;--accent-lt:#EEF0FE;--accent-mid:#C7CBFB;
+  --st-new:#64748B;--st-sent:#0EA5E9;--st-replied:#F59E0B;--st-interested:#10B981;--st-closed:#8B5CF6;--st-rejected:#EF4444;
+  --n0:#4F5FF0;--n1:#EC4899;--n2:#0EA5E9;--n3:#10B981;--n4:#F97316;--n5:#8B5CF6;--n6:#94A3B8;
+  --r:10px;--r-lg:16px;
+  --sh:0 1px 4px rgba(0,0,0,.05),0 0 1px rgba(0,0,0,.06);
+  --sh-md:0 4px 16px rgba(0,0,0,.08);--sh-lg:0 24px 48px rgba(0,0,0,.12);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans Arabic',-apple-system,sans-serif;background:var(--bg);color:var(--text-1);min-height:100vh;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;}
+
+/* TOPBAR */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:var(--sh);}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#4F5FF0,#7B85F5);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(79,95,240,.3);}
+.brand-name{font-size:17px;font-weight:700;color:var(--text-1);letter-spacing:-.5px}
+.brand-name em{font-style:normal;font-weight:400;color:var(--text-3);font-size:13px;margin-right:6px}
+.topbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.pill-count{background:var(--accent-lt);border:1px solid var(--accent-mid);border-radius:999px;padding:5px 16px;font-size:12px;color:var(--accent);font-weight:600;}
+.pill-count span{font-weight:700}
+.tbtn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--r);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;border:1px solid var(--border-2);background:var(--surface);color:var(--text-2);transition:all .16s;white-space:nowrap;}
+.tbtn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-lt)}
+.tbtn.primary{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 2px 8px rgba(79,95,240,.25)}
+.tbtn.primary:hover{background:var(--accent-dk)}
+.tbtn.export{background:#F0FDF4;color:#15803D;border-color:#BBF7D0}
+.tbtn.export:hover{background:#DCFCE7;border-color:#86EFAC}
+
+/* CLOUD NOTICE */
+.cloud-notice{margin:12px 24px 0;background:linear-gradient(135deg,#EFF6FF,#EEF0FE);border:1px solid #BFDBFE;border-radius:var(--r);padding:10px 16px;font-size:12px;color:#1E40AF;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.cloud-notice strong{font-weight:700}
+.cloud-status-dot{width:8px;height:8px;border-radius:50%;background:#10B981;flex-shrink:0;animation:pulse 2s infinite;}
+.cloud-status-dot.offline{background:#EF4444;animation:none}
+.cloud-status-dot.syncing{background:#F59E0B;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.85)}}
+
+/* NICHE TABS */
+.niches-wrap{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;gap:6px;overflow-x:auto;}
+.niches-wrap::-webkit-scrollbar{display:none}
+.ntab{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:999px;font-size:12px;font-weight:500;border:1.5px solid transparent;background:var(--surface-3);color:var(--text-3);cursor:pointer;font-family:inherit;transition:all .16s;white-space:nowrap;}
+.ntab:hover{color:var(--text-2);background:var(--border)}
+.ntab.active{background:var(--accent-lt);color:var(--accent);border-color:var(--accent-mid);font-weight:600}
+.ndot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ncnt{background:rgba(0,0,0,.06);border-radius:999px;padding:1px 7px;font-size:10px;font-weight:600;}
+.ntab.active .ncnt{background:var(--accent);color:#fff}
+
+/* STATS */
+.stats{padding:18px 24px 0;display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
+@media(max-width:900px){.stats{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}}
+.scard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 20px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:4px;}
+.scard-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.slabel{font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.7px}
+.sicon{font-size:20px;opacity:.7}
+.sval{font-size:28px;font-weight:700;letter-spacing:-.8px;line-height:1}
+.ssub{font-size:11px;color:var(--text-3);margin-top:2px}
+.sbar{height:3px;background:var(--surface-3);border-radius:999px;margin-top:10px;overflow:hidden}
+.sbar-fill{height:100%;border-radius:999px;transition:width .5s ease}
+
+/* CHARTS SECTION */
+.charts-section{padding:16px 24px 0;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;}
+@media(max-width:1100px){.charts-section{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.charts-section{grid-template-columns:1fr}}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 18px;box-shadow:var(--sh);}
+.chart-title{font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+.chart-wrap{position:relative;height:160px;}
+
+/* TOOLBAR */
+.toolbar{padding:14px 24px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.sw{flex:1;min-width:160px;position:relative}
+.sico{position:absolute;right:13px;top:50%;transform:translateY(-50%);color:var(--text-3);pointer-events:none;font-size:14px}
+.sinput{width:100%;background:var(--surface);border:1px solid var(--border-2);border-radius:var(--r);padding:10px 40px 10px 14px;color:var(--text-1);font-family:inherit;font-size:13px;outline:none;box-shadow:var(--sh);transition:border .15s,box-shadow .15s;}
+.sinput:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,95,240,.12)}
+.sinput::placeholder{color:var(--text-3)}
+.fsel{background:var(--surface);border:1px solid var(--border-2);border-radius:var(--r);padding:10px 12px;color:var(--text-2);font-family:inherit;font-size:13px;outline:none;cursor:pointer;box-shadow:var(--sh);transition:border .15s;}
+.fsel:focus{border-color:var(--accent)}
+.sort-sel{background:var(--surface);border:1px solid var(--border-2);border-radius:var(--r);padding:10px 12px;color:var(--text-2);font-family:inherit;font-size:13px;outline:none;cursor:pointer;box-shadow:var(--sh);}
+.view-toggle{display:flex;gap:4px;background:var(--surface-3);border-radius:var(--r);padding:3px;border:1px solid var(--border)}
+.vtbtn{padding:6px 14px;border-radius:7px;border:none;background:transparent;color:var(--text-3);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;gap:5px}
+.vtbtn.active{background:var(--surface);color:var(--text-1);box-shadow:var(--sh);font-weight:600}
+
+/* GRID */
+.grid{padding:0 24px 36px;display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;}
+.empty{grid-column:1/-1;text-align:center;padding:72px 20px;color:var(--text-3);}
+.empty-ico{font-size:44px;margin-bottom:16px;opacity:.4}
+.empty h3{font-size:15px;color:var(--text-2);font-weight:600;margin-bottom:6px}
+.empty p{font-size:13px}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;transition:transform .18s,box-shadow .18s,border-color .18s;box-shadow:var(--sh);display:flex;flex-direction:column;}
+.card:hover{transform:translateY(-2px);box-shadow:var(--sh-md);border-color:var(--border-2)}
+.card-strip{height:4px;width:100%;flex-shrink:0}
+.card-head{padding:14px 16px 11px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:8px;background:var(--surface-2);}
+.card-avatar{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;color:#fff;}
+.card-info{flex:1;min-width:0}
+.cname{font-size:14px;font-weight:600;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cniche{font-size:11px;color:var(--text-3);margin-top:2px;display:flex;align-items:center;gap:4px}
+.cdate{font-size:10px;color:var(--text-3);margin-top:1px}
+.ssel{flex-shrink:0;background:var(--surface);border:1px solid var(--border-2);border-radius:8px;padding:5px 8px;font-family:inherit;font-size:11px;font-weight:600;cursor:pointer;outline:none;transition:all .15s;}
+.ssel:hover{border-color:var(--accent)}
+.card-body{padding:13px 16px;flex:1}
+.phone-row{font-size:12px;color:var(--text-2);font-weight:500;margin-bottom:9px;display:flex;align-items:center;gap:6px;direction:ltr;justify-content:flex-end;}
+.wtag{display:inline-flex;align-items:center;gap:4px;background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:500;margin-bottom:9px;}
+.stag{display:inline-block;background:var(--accent-lt);border:1px solid var(--accent-mid);color:var(--accent);border-radius:6px;padding:2px 9px;font-size:11px;font-weight:500;margin-right:5px;margin-bottom:9px;}
+.deal-tag{display:inline-flex;align-items:center;gap:4px;background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46;border-radius:6px;padding:3px 9px;font-size:11px;font-weight:600;margin-bottom:9px;}
+.priority-badge{display:inline-flex;align-items:center;gap:4px;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700;margin-left:5px;}
+.pri-high{background:#FEF2F2;border:1px solid #FECACA;color:#B91C1C;}
+.pri-med{background:#FFFBEB;border:1px solid #FDE68A;color:#92400E;}
+.pri-low{background:#F8FAFC;border:1px solid #E2E8F0;color:#64748B;}
+.note-box{background:var(--surface-3);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--text-2);line-height:1.6;cursor:pointer;border:1px dashed var(--border-2);min-height:36px;transition:all .15s;}
+.note-box:hover{border-color:var(--accent);background:var(--accent-lt);color:var(--text-1)}
+.note-ph{color:var(--text-3);font-style:italic}
+.fu-badge{display:inline-flex;align-items:center;gap:5px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:3px 9px;font-size:11px;color:#92400E;font-weight:600;margin-top:7px;}
+.fu-dot{width:5px;height:5px;border-radius:50%;background:#D97706;animation:blink 1.6s infinite;flex-shrink:0}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+.history-mini{margin-top:8px;border-top:1px solid var(--border);padding-top:8px;}
+.history-item{font-size:10px;color:var(--text-3);display:flex;gap:6px;align-items:flex-start;margin-bottom:3px;line-height:1.5;}
+.history-dot{width:5px;height:5px;border-radius:50%;background:var(--text-3);margin-top:4px;flex-shrink:0}
+.card-foot{padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:7px;background:var(--surface-2);}
+.wa-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:var(--r);color:#15803D;font-size:12px;font-weight:600;text-decoration:none;cursor:pointer;transition:all .15s;font-family:inherit;}
+.wa-btn:hover{background:#DCFCE7;border-color:#86EFAC}
+.icon-btn{padding:9px 13px;background:var(--surface);border:1px solid var(--border-2);border-radius:var(--r);color:var(--text-2);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;}
+.icon-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-lt)}
+.edit-btn{padding:9px 13px;background:var(--surface);border:1px solid var(--border-2);border-radius:var(--r);color:var(--text-2);font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s;}
+.edit-btn:hover{border-color:#F59E0B;color:#D97706;background:#FFFBEB}
+.del-btn{padding:9px 13px;background:var(--surface);border:1px solid var(--border-2);border-radius:var(--r);color:var(--text-3);font-size:14px;cursor:pointer;font-family:inherit;transition:all .15s;line-height:1;}
+.del-btn:hover{border-color:var(--st-rejected);color:var(--st-rejected);background:#FEF2F2}
+
+/* KANBAN */
+.kanban{padding:0 24px 36px;display:flex;gap:12px;overflow-x:auto;align-items:flex-start;}
+.kanban::-webkit-scrollbar{height:6px}
+.kanban::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:99px}
+.kb-col{flex-shrink:0;width:260px;display:flex;flex-direction:column;gap:8px;}
+.kb-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh);}
+.kb-title{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--text-1)}
+.kb-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.kb-cnt{font-size:11px;font-weight:600;color:var(--text-3);background:var(--surface-3);border-radius:99px;padding:1px 8px}
+.kb-body{display:flex;flex-direction:column;gap:8px;min-height:80px;border-radius:var(--r);padding:4px;transition:background .15s;}
+.kb-body.drag-over{background:var(--accent-lt);outline:2px dashed var(--accent-mid);outline-offset:-2px}
+.kb-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);cursor:grab;transition:box-shadow .15s,transform .15s,opacity .15s;user-select:none;}
+.kb-card:active{cursor:grabbing}
+.kb-card.dragging{opacity:.45;transform:rotate(1.5deg);box-shadow:var(--sh-lg)}
+.kb-strip{height:3px;width:100%}
+.kb-top{padding:10px 12px 8px;border-bottom:1px solid var(--border);background:var(--surface-2);display:flex;align-items:center;gap:8px}
+.kb-av{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.kb-name{font-size:12px;font-weight:600;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.kb-niche{font-size:10px;color:var(--text-3);margin-top:1px}
+.kb-body-inner{padding:8px 12px;display:flex;flex-direction:column;gap:5px}
+.kb-phone{font-size:11px;color:var(--text-2);direction:ltr;text-align:right}
+.kb-weak{font-size:10px;color:#B91C1C;background:#FEF2F2;border:1px solid #FECACA;border-radius:4px;padding:2px 7px;display:inline-block}
+.kb-deal{font-size:10px;color:#065F46;background:#ECFDF5;border:1px solid #A7F3D0;border-radius:4px;padding:2px 7px;display:inline-block;font-weight:600}
+.kb-foot{padding:7px 10px;border-top:1px solid var(--border);background:var(--surface-2);display:flex;gap:6px}
+.kb-wa{flex:1;font-size:11px;font-weight:600;color:#15803D;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:6px;padding:6px;text-align:center;text-decoration:none;transition:all .15s}
+.kb-wa:hover{background:#DCFCE7}
+.kb-msg{font-size:11px;padding:6px 9px;background:var(--surface);border:1px solid var(--border-2);border-radius:6px;cursor:pointer;font-family:inherit;color:var(--text-2);transition:all .15s}
+.kb-msg:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-lt)}
+.kb-del{font-size:12px;padding:6px 9px;background:var(--surface);border:1px solid var(--border-2);border-radius:6px;cursor:pointer;font-family:inherit;color:var(--text-3);transition:all .15s}
+.kb-del:hover{border-color:var(--st-rejected);color:var(--st-rejected);background:#FEF2F2}
+.kb-fu{display:flex;align-items:center;gap:4px;font-size:10px;color:#92400E;background:#FFFBEB;border:1px solid #FDE68A;border-radius:4px;padding:2px 7px;width:fit-content}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(15,22,35,.5);z-index:500;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;box-shadow:var(--sh-lg);}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+.modal-hd h3{font-size:16px;font-weight:700;color:var(--text-1)}
+.mclose{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:inherit;}
+.mclose:hover{border-color:var(--st-rejected);color:var(--st-rejected);background:#FEF2F2}
+.ff{margin-bottom:14px}
+.ff label{display:block;font-size:12px;color:var(--text-2);margin-bottom:6px;font-weight:600}
+.ff input,.ff select,.ff textarea{width:100%;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--r);padding:10px 13px;color:var(--text-1);font-family:inherit;font-size:13px;outline:none;transition:border .15s,box-shadow .15s;}
+.ff input:focus,.ff select:focus,.ff textarea:focus{border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px rgba(79,95,240,.1);}
+.ff textarea{resize:vertical;min-height:80px;line-height:1.7}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.mbtns{display:flex;gap:10px;margin-top:20px}
+.mbtns button{flex:1;padding:11px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;border:1px solid var(--border-2);transition:all .15s;}
+.mbsave{background:var(--accent);color:#fff;border-color:var(--accent)}
+.mbsave:hover{background:var(--accent-dk)}
+.mbcancel{background:var(--surface-2);color:var(--text-2)}
+.mbcancel:hover{background:var(--surface-3)}
+.msg-preview{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:16px;font-size:13px;line-height:2;white-space:pre-wrap;margin-bottom:14px;direction:rtl;color:var(--text-1);width:100%;resize:vertical;min-height:160px;font-family:'IBM Plex Sans Arabic',-apple-system,sans-serif;outline:none;transition:border .15s,box-shadow .15s;}
+.msg-preview:focus{border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px rgba(79,95,240,.1);}
+.msg-edit-hint{font-size:11px;color:var(--text-3);margin-bottom:10px;display:flex;align-items:center;gap:5px;}
+.copy-btn{width:100%;padding:11px;background:var(--accent);border:none;border-radius:var(--r);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:10px;transition:all .15s;}
+.copy-btn:hover{background:var(--accent-dk)}
+.history-log{max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--r);margin-top:12px;}
+.history-log-item{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;display:flex;gap:10px;align-items:flex-start;}
+.history-log-item:last-child{border-bottom:none}
+.hli-date{font-size:10px;color:var(--text-3);white-space:nowrap;padding-top:1px;min-width:70px}
+.hli-text{color:var(--text-2);flex:1;line-height:1.5}
+.history-add-row{display:flex;gap:8px;margin-top:10px;}
+.history-add-row input{flex:1;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--r);padding:9px 13px;font-family:inherit;font-size:12px;color:var(--text-1);outline:none;}
+.history-add-row input:focus{border-color:var(--accent)}
+.history-add-row button{padding:9px 16px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;}
+
+/* SETUP */
+.setup-steps{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:14px 16px;margin-bottom:18px;font-size:12px;color:#1E40AF;line-height:2}
+.sync-warning{background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:10px 14px;font-size:11px;color:#78350F;margin-bottom:16px;}
+
+/* UNDO TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--text-1);color:#fff;padding:12px 20px;border-radius:var(--r);font-size:13px;font-weight:500;z-index:900;transition:transform .3s ease;display:flex;align-items:center;gap:12px;box-shadow:var(--sh-lg);}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast-undo{background:none;border:1px solid rgba(255,255,255,.3);border-radius:6px;color:#fff;padding:4px 12px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;}
+.toast-undo:hover{background:rgba(255,255,255,.1)}
+
+/* REMINDER BADGE */
+.reminder-badge{display:inline-flex;align-items:center;gap:4px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:6px;padding:2px 8px;font-size:10px;color:#1E40AF;font-weight:600;margin-top:4px;}
+
+/* BULK FILTER BTNS */
+.bulk-filter-btn{padding:7px 14px;border-radius:999px;border:1.5px solid var(--border-2);background:var(--surface);color:var(--text-2);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;}
+.bulk-filter-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-lt)}
+.bulk-filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+/* SURVEY DONE */
+.survey-btn.survey-done{background:#F0FDF4;color:#15803D;border-color:#BBF7D0;}
+
+/* SURVEY FULL PAGE */
+.survey-page{display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;overflow-y:auto;}
+.survey-page.open{display:block}
+.survey-header{background:linear-gradient(135deg,#4F5FF0,#7B85F5);padding:24px 28px;color:#fff;position:sticky;top:0;z-index:10;box-shadow:0 4px 16px rgba(79,95,240,.3);}
+.survey-header h2{font-size:18px;font-weight:700;margin-bottom:4px}
+.survey-progress{margin-top:14px;height:6px;background:rgba(255,255,255,.25);border-radius:999px;overflow:hidden}
+.survey-progress-fill{height:100%;background:#fff;border-radius:999px;transition:width .4s ease}
+.survey-submit-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);padding:14px 24px;display:flex;gap:10px;justify-content:center;z-index:10;box-shadow:0 -4px 16px rgba(0,0,0,.06);}
+.sq-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:22px 24px;margin-bottom:14px;box-shadow:var(--sh);}
+.sq-num{font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px}
+.sq-label{font-size:14px;font-weight:600;color:var(--text-1);margin-bottom:14px;line-height:1.6}
+.sq-input{width:100%;background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--r);padding:11px 14px;color:var(--text-1);font-family:'IBM Plex Sans Arabic',-apple-system,sans-serif;font-size:13px;outline:none;transition:border .15s,box-shadow .15s;resize:vertical;min-height:42px;}
+.sq-input:focus{border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px rgba(79,95,240,.1);}
+.sq-options{display:flex;flex-wrap:wrap;gap:8px}
+.sq-opt{padding:8px 16px;border-radius:999px;border:1.5px solid var(--border-2);background:var(--surface);color:var(--text-2);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;}
+.sq-opt:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-lt)}
+.sq-opt.selected{background:var(--accent);color:#fff;border-color:var(--accent)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">🎬</div>
+    <div class="brand-name">Veo 3 <em>/ داشبورد العملاء</em></div>
+  </div>
+  <div class="topbar-actions">
+    <div id="syncBadge" style="padding:5px 12px;border:1px solid var(--border);border-radius:999px;background:var(--surface-2)">
+      <span style="color:#94A3B8;font-size:12px;font-weight:600">🔌 غير متصل</span>
+    </div>
+    <div class="pill-count">إجمالي <span id="htotal">0</span> عميل</div>
+    <button class="tbtn" onclick="showSetup()" title="إعدادات السحابة">⚙️ سحابة</button>
+    <button class="tbtn" id="notifBtn" onclick="requestNotifPermission()" title="إشعارات الفولو أب">🔔 <span id="notifBtnText">تفعيل الإشعارات</span></button>
+    <button class="tbtn" onclick="openAdd()">＋ إضافة</button>
+    <button class="tbtn" id="bulkSendBtn" onclick="openBulkSend()" style="background:#F0FDF4;color:#15803D;border-color:#BBF7D0">🚀 إرسال الكل</button>
+    <button class="tbtn export" onclick="exportExcel()">⬇ Excel</button>
+    <button class="tbtn primary" onclick="document.getElementById('fi').click()">⬆ رفع Excel</button>
+    <input type="file" id="fi" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFile(event)">
+  </div>
+</div>
+
+<div class="cloud-notice" id="cloudNotice">
+  <div class="cloud-status-dot offline" id="cloudDot"></div>
+  <span id="cloudNoticeText"><strong>السحابة:</strong> غير مُعدَّة بعد — اضغط ⚙️ سحابة لإعداد GitHub Gist وضمان حفظ بياناتك على أي متصفح</span>
+</div>
+
+<div id="sampleBanner" style="margin:8px 24px 0;background:linear-gradient(135deg,#FFFBEB,#FEF3C7);border:1px solid #FDE68A;border-radius:10px;padding:10px 16px;font-size:12px;color:#92400E;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+  <span style="font-size:16px">🧪</span>
+  <span><strong>بيانات تجريبية:</strong> أنت حالياً تشاهد 30 عميل تجريبي موزعين على 5 مجالات — صالونات · عيادات · عقارات · مطاعم · تعليم. لما تضيف بياناتك الحقيقية أو ترفع Excel، هتختفي التجريبية تلقائياً.</span>
+</div>
+
+<div class="niches-wrap" id="nichesBar"></div>
+<div class="stats" id="statsBar"></div>
+<div class="charts-section" id="chartsSection"></div>
+
+<div class="toolbar">
+  <div class="sw">
+    <span class="sico">🔍</span>
+    <input class="sinput" type="text" id="searchInput" placeholder="ابحث باسم أو رقم أو ملاحظة..." oninput="renderAll()">
+  </div>
+  <select class="fsel" id="fStatus" onchange="renderAll()">
+    <option value="">كل الحالات</option>
+    <option value="new">جديد</option>
+    <option value="sent">تم الإرسال</option>
+    <option value="replied">رد</option>
+    <option value="interested">مهتم</option>
+    <option value="closed">اتفقنا</option>
+    <option value="rejected">مش مهتم</option>
+  </select>
+  <select class="fsel" id="fSource" onchange="renderAll()">
+    <option value="">كل المصادر</option>
+    <option value="Ad Library">Ad Library</option>
+    <option value="Google Maps">Google Maps</option>
+    <option value="Instagram DM">Instagram DM</option>
+    <option value="LinkedIn">LinkedIn</option>
+    <option value="TikTok">TikTok</option>
+    <option value="Referral">Referral</option>
+    <option value="أخرى">أخرى</option>
+  </select>
+  <select class="fsel" id="fPriority" onchange="renderAll()">
+    <option value="">كل الأولويات</option>
+    <option value="high">🔴 عالية</option>
+    <option value="medium">🟡 متوسطة</option>
+    <option value="low">⚪ منخفضة</option>
+  </select>
+  <select class="sort-sel" id="fSort" onchange="renderAll()">
+    <option value="newest">الأحدث أولاً</option>
+    <option value="oldest">الأقدم أولاً</option>
+    <option value="name">الاسم أبجدياً</option>
+    <option value="deal">قيمة الصفقة</option>
+    <option value="followup">فولو أب مطلوب</option>
+  </select>
+  <div class="view-toggle">
+    <button class="vtbtn active" id="vGrid" onclick="setView('grid')">⊞ بطاقات</button>
+    <button class="vtbtn" id="vKan" onclick="setView('kanban')">☰ كانبان</button>
+  </div>
+</div>
+
+<div class="grid" id="grid"></div>
+<div class="kanban" id="kanban" style="display:none"></div>
+
+<!-- NOTE OVERLAY -->
+<div class="overlay" id="noteOverlay">
+  <div class="modal">
+    <div class="modal-hd"><h3>📝 ملاحظة</h3><button class="mclose" onclick="closeOv('noteOverlay')">✕</button></div>
+    <div class="ff"><textarea id="noteInput" placeholder="اكتب ملاحظتك..."></textarea></div>
+    <div class="mbtns">
+      <button class="mbcancel" onclick="closeOv('noteOverlay')">إلغاء</button>
+      <button class="mbsave" onclick="saveNote()">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- MSG OVERLAY -->
+<div class="overlay" id="msgOverlay">
+  <div class="modal">
+    <div class="modal-hd"><h3>💬 رسالة واتساب</h3><button class="mclose" onclick="closeOv('msgOverlay')">✕</button></div>
+    <div class="msg-edit-hint">✏️ الرسالة قابلة للتعديل — عدّل واحفظ أو انسخها مباشرة</div>
+    <textarea class="msg-preview" id="msgPreview" oninput="currentMsg=this.value"></textarea>
+    <button class="copy-btn" onclick="copyMsg()">نسخ الرسالة</button>
+    <div class="mbtns">
+      <button class="mbcancel" onclick="resetMsg()">↺ إعادة الأصلية</button>
+      <button id="msgSaveBtn" class="mbsave" onclick="saveEditedMsg()">💾 حفظ التعديل</button>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY OVERLAY -->
+<div class="overlay" id="historyOverlay">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-hd"><h3>📋 سجل المحادثات</h3><button class="mclose" onclick="closeOv('historyOverlay')">✕</button></div>
+    <div id="historyClientName" style="font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:12px"></div>
+    <div class="history-log" id="historyLog"></div>
+    <div class="history-add-row">
+      <input id="historyInput" placeholder="أضف ملاحظة أو تحديث..." maxlength="200">
+      <button onclick="addHistoryEntry()">➕ إضافة</button>
+    </div>
+    <div class="mbtns" style="margin-top:14px">
+      <button class="mbsave" onclick="closeOv('historyOverlay')">تم</button>
+    </div>
+  </div>
+</div>
+
+<!-- SURVEY FULL PAGE -->
+<div class="survey-page" id="surveyPage">
+  <div class="survey-header">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <h2>🎬 استبيان إعلان سينمائي من سينمادز</h2>
+        <p id="surveyClientName" style="opacity:.8;font-size:13px;margin-top:4px">جاري التحميل...</p>
+      </div>
+      <button onclick="closeSurveyPage()" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);border-radius:8px;color:#fff;padding:8px 16px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">✕ إغلاق</button>
+    </div>
+    <div class="survey-progress"><div class="survey-progress-fill" id="surveyProgressFill" style="width:0%"></div></div>
+    <div style="font-size:11px;opacity:.7;margin-top:6px" id="surveyProgressTxt">دقيقتين بس للبدء في إعلانك السينمائي</div>
+  </div>
+
+  <!-- لو في بيانات موجودة -->
+  <div id="surveyFilledPage" style="display:none;max-width:620px;margin:0 auto;padding:28px 24px">
+    <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:var(--r-lg);padding:18px 20px;margin-bottom:20px;font-size:14px;color:#15803D;font-weight:600;display:flex;align-items:center;gap:10px">
+      <span style="font-size:24px">✅</span> العميل ملأ الاستبيان — البيانات جاهزة
+    </div>
+    <div id="surveyDataViewPage" style="display:grid;gap:12px;margin-bottom:24px"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="clearSurveyPage()" style="flex:1;padding:12px;border-radius:var(--r);border:1px solid #FECACA;background:#FEF2F2;color:#B91C1C;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">🗑 مسح البيانات</button>
+      <button onclick="closeSurveyPage()" style="flex:2;padding:12px;border-radius:var(--r);border:none;background:var(--accent);color:#fff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer">تم ✓</button>
+    </div>
+  </div>
+
+  <!-- لو مفيش بيانات — الاستبيان الكامل -->
+  <div id="surveyFormPage" style="display:none">
+    <div style="max-width:620px;margin:0 auto;padding:28px 24px 100px" id="surveyBodyPage"></div>
+    <div class="survey-submit-bar">
+      <button onclick="closeSurveyPage()" style="padding:12px 24px;border-radius:var(--r);border:1px solid var(--border-2);background:var(--surface-2);color:var(--text-2);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer">✕ إغلاق</button>
+      <button onclick="sendSurveyWaPage()" style="padding:12px 32px;border-radius:var(--r);border:none;background:#25D366;color:#fff;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(37,211,102,.3)">💬 ابعت الرابط على واتساب</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="overlay" id="addOverlay">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-hd"><h3 id="addOverlayTitle">➕ إضافة عميل جديد</h3><button class="mclose" onclick="closeOv('addOverlay')">✕</button></div>
+    <input type="hidden" id="editId">
+    <div class="frow">
+      <div class="ff"><label>اسم البيزنس *</label><input id="an" placeholder="صالون لمسة"></div>
+      <div class="ff"><label>رقم الواتساب *</label><input id="ap" placeholder="971501234567" dir="ltr"></div>
+    </div>
+    <div class="frow">
+      <div class="ff"><label>النيش</label>
+        <select id="anic"><option>شركات</option><option>عقارات</option><option>تعليم</option><option>صالونات</option><option>عيادات</option><option>مطاعم</option><option>غيره</option></select>
+      </div>
+      <div class="ff"><label>المصدر</label>
+        <select id="asrc">
+          <option>Ad Library</option><option>Google Maps</option><option>Instagram DM</option>
+          <option>LinkedIn</option><option>TikTok</option><option>Referral</option><option>أخرى</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="ff"><label>الأولوية</label>
+        <select id="apri">
+          <option value="medium">🟡 متوسطة</option>
+          <option value="high">🔴 عالية</option>
+          <option value="low">⚪ منخفضة</option>
+        </select>
+      </div>
+      <div class="ff"><label>💰 قيمة الصفقة (اختياري)</label>
+        <input id="adeal" placeholder="مثال: 1500 درهم" dir="ltr">
+      </div>
+    </div>
+    <div class="ff"><label>📅 تاريخ التذكير (فولو أب)</label>
+      <input type="date" id="areminder">
+    </div>
+    <div class="ff"><label>نقطة الضعف</label>
+      <select id="awk">
+        <option value="">اختار</option>
+        <option>فيديو قديم وجودة ضعيفة</option><option>مفيش صوت أو كلام</option>
+        <option>صور بس — مفيش فيديو</option><option>مفيش كاراكتر بيتكلم</option>
+        <option>الرسالة مش واضحة</option><option>مفيش call to action</option>
+        <option>التصميم قديم</option><option>فيديو مؤسسي</option>
+      </select>
+    </div>
+    <div class="ff"><label>ملاحظة</label><textarea id="anote" placeholder="أي ملاحظة..."></textarea></div>
+    <div class="mbtns">
+      <button class="mbcancel" onclick="closeOv('addOverlay')">إلغاء</button>
+      <button class="mbsave" id="addSaveBtn" onclick="saveClient()">إضافة العميل</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETUP OVERLAY -->
+<div class="overlay" id="setupOverlay">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-hd">
+      <h3>☁️ إعدادات الحفظ السحابي</h3>
+      <button class="mclose" onclick="closeSetup()">✕</button>
+    </div>
+    <div class="sync-warning">
+      <strong>⚠️ مهم جداً:</strong> بدون إعداد السحابة، البيانات بتتحفظ في المتصفح الحالي فقط — لو فتحت الملف من متصفح تاني أو جهاز تاني، مش هتلاقيها. إعداد GitHub Gist يحفظ كل حاجة على السحابة وتقدر تفتحها من أي مكان.
+    </div>
+    <div class="setup-steps">
+      <strong>📋 خطوات إعداد GitHub Gist (مرة واحدة بس):</strong><br>
+      ١. روح <strong>github.com</strong> وعمل حساب مجاني لو مش عندك<br>
+      ٢. روح <strong>github.com/settings/tokens</strong><br>
+      ٣. اضغط <em>Generate new token (classic)</em><br>
+      ٤. في الـ Scopes اختار ✅ <strong>gist</strong> بس<br>
+      ٥. انسخ الـ Token وحطه تحت — الداشبورد هينشئ Gist تلقائي
+    </div>
+    <div class="ff">
+      <label>GitHub Token *</label>
+      <input id="ghToken" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" dir="ltr" value="">
+    </div>
+    <div class="ff">
+      <label>Gist ID (اتركه فاضي لو أول مرة — هيتنشأ تلقائي)</label>
+      <input id="ghGistId" placeholder="اختياري" dir="ltr" value="">
+    </div>
+    <div id="setupStatus" style="font-size:12px;min-height:20px;margin-bottom:10px;font-weight:600"></div>
+    <div class="mbtns">
+      <button class="mbcancel" onclick="clearSetup()" style="color:#EF4444;border-color:#FECACA">🗑 مسح الإعدادات</button>
+      <button class="mbsave" onclick="saveSetup()">اتصل وحفظ ☁️</button>
+    </div>
+    <p style="font-size:11px;color:var(--text-3);margin-top:14px;text-align:center">الـ Token بيتحفظ في متصفحك فقط — مش بيتبعت لأي سيرفر تاني</p>
+  </div>
+</div>
+
+<!-- BULK SEND OVERLAY -->
+<div class="overlay" id="bulkOverlay">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-hd">
+      <h3>🚀 إرسال الكل</h3>
+      <button class="mclose" onclick="closeOv('bulkOverlay')">✕</button>
+    </div>
+    <div id="bulkSummary" style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:16px;font-size:13px;line-height:2"></div>
+    <div style="margin-bottom:14px">
+      <label style="font-size:12px;font-weight:600;color:var(--text-2);display:block;margin-bottom:8px">🎯 إرسال لمين؟</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="bulkFilterBtns">
+        <button class="bulk-filter-btn active" data-filter="new" onclick="setBulkFilter('new',this)">🔵 جديد فقط</button>
+        <button class="bulk-filter-btn" data-filter="sent" onclick="setBulkFilter('sent',this)">📤 تم الإرسال (فولو أب)</button>
+        <button class="bulk-filter-btn" data-filter="all" onclick="setBulkFilter('all',this)">📋 الكل (عدا اتفقنا ومش مهتم)</button>
+      </div>
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="font-size:12px;font-weight:600;color:var(--text-2);display:block;margin-bottom:6px">⏱ التأخير بين كل رسالة</label>
+      <select id="bulkDelay" style="background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--r);padding:9px 12px;font-family:inherit;font-size:13px;outline:none;width:100%" onchange="updateBulkSummary()">
+        <option value="800">سريع — 0.8 ثانية</option>
+        <option value="1500" selected>متوسط — 1.5 ثانية (موصى)</option>
+        <option value="3000">بطيء — 3 ثوان (أأمن)</option>
+      </select>
+    </div>
+    <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:var(--r);padding:12px 14px;font-size:12px;color:#92400E;margin-bottom:16px;line-height:1.8">
+      ⚠️ <strong>مهم:</strong> المتصفح هيطلب منك السماح بفتح نوافذ متعددة — اضغط <strong>"Allow"</strong> أو <strong>"السماح"</strong> لما تظهر الرسالة.<br>
+      كل تاب بيفتح واتساب ويب مع الرسالة جاهزة — إنت بس بتضغط إرسال.
+    </div>
+    <div id="bulkProgress" style="display:none;margin-bottom:14px">
+      <div style="font-size:12px;color:var(--text-2);margin-bottom:6px;font-weight:600" id="bulkProgressText">جاري الفتح...</div>
+      <div style="height:6px;background:var(--surface-3);border-radius:999px;overflow:hidden">
+        <div id="bulkProgressBar" style="height:100%;background:var(--accent);border-radius:999px;transition:width .3s ease;width:0%"></div>
+      </div>
+    </div>
+    <div class="mbtns">
+      <button class="mbcancel" onclick="closeOv('bulkOverlay')">إلغاء</button>
+      <button class="mbsave" id="bulkStartBtn" onclick="startBulkSend()">🚀 ابدأ الإرسال</button>
+    </div>
+  </div>
+</div>
+
+<!-- UNDO TOAST -->
+<div class="toast" id="toast">
+  <span id="toastMsg">تم الحذف</span>
+  <button class="toast-undo" onclick="undoDelete()">↩ تراجع</button>
+</div>
+
+<script>
+const NICHES=['الكل','شركات','عقارات','تعليم','صالونات','عيادات','مطاعم','غيره'];
+const NC=['#4F5FF0','#06B6D4','#10B981','#8B5CF6','#EC4899','#0EA5E9','#F97316','#94A3B8'];
+const NICO=['🌐','🏢','🏠','📚','✂️','🏥','🍽️','📦'];
+const STATUSES={new:'جديد',sent:'تم الإرسال',replied:'رد',interested:'مهتم',closed:'اتفقنا',rejected:'مش مهتم'};
+const STCOL={new:'#64748B',sent:'#0EA5E9',replied:'#F59E0B',interested:'#10B981',closed:'#8B5CF6',rejected:'#EF4444'};
+const STBG={new:'#F8FAFC',sent:'#F0F9FF',replied:'#FFFBEB',interested:'#ECFDF5',closed:'#F5F3FF',rejected:'#FEF2F2'};
+const MSGS={
+  'فيديو قديم وجودة ضعيفة':n=>`السلام عليكم${n?' '+n:''} 👋\nشفت إعلانكم — المحتوى كويس بس الفيديو مش بيعمله حقه.\nعندي فكرة بتقنية Veo 3 AI تخلي الإعلان أقوى بجودة سينمائية.\nلو مهتمين نتكلم في دقيقتين؟`,
+  'مفيش صوت أو كلام':n=>`السلام عليكم${n?' '+n:''} 👋\nشفت إعلانكم — مفيش صوت والناس بتعدي بسرعة.\nعندي حل AI بيخلي فيه شخصية بتتكلم وبتشرح.\nمهتمين تشوفوا مثال؟`,
+  'صور بس — مفيش فيديو':n=>`السلام عليكم${n?' '+n:''} 👋\nالصور كويسة بس الفيديو دلوقتي بيجيب تفاعل أعلى بكتير.\nعندي خدمة فيديو AI احترافي زي إنتاج تليفزيوني.\nتحبوا تشوفوا مثال؟`,
+  'مفيش كاراكتر بيتكلم':n=>`السلام عليكم${n?' '+n:''} 👋\nشفت إعلانكم — مفيش حد بيتكلم والناس بتعدي بسرعة.\nبـVeo 3 نعمل شخصية واقعية بتتكلم عن خدمتكم بأي لهجة.\nمهتمين؟`,
+  'الرسالة مش واضحة':n=>`السلام عليكم${n?' '+n:''} 👋\nشفت إعلانكم — الخدمة كويسة بس الرسالة مش واصلة بوضوح.\nعندي نظام إعلان متكامل بسكريبت + فيديو AI.\nنتكلم دقيقتين؟`,
+  'مفيش call to action':n=>`السلام عليكم${n?' '+n:''} 👋\nشفت إعلانكم — مفيش call to action والعميل مش عارف يعمل إيه.\nعندي فيديو AI بيوصل الرسالة ويحرك العميل للتواصل.\nمهتمين؟`,
+  'التصميم قديم':n=>`السلام عليكم${n?' '+n:''} 👋\nشفت إعلانكم — المنتج كويس بس التصميم محتاج تجديد.\nبـVeo 3 نعمل فيديو سينمائي احترافي بسعر مناسب.\nتحبوا تشوفوا أمثلة؟`,
+  'فيديو مؤسسي':n=>`السلام عليكم${n?' '+n:''} 👋\nشفت شركتكم وما لقيت فيديو تعريفي يعكس حجم أعمالكم.\nبـVeo 3 AI نقدر نعمل فيديو مؤسسي احترافي بجودة سينمائية في وقت قصير.\nمهتمين نتكلم دقيقتين؟`,
+  default:n=>`السلام عليكم${n?' '+n:''} 👋\nشفت إعلانكم وعندي اقتراح يخليه أقوى بتقنية Veo 3 AI.\nالفيديو بيطلع بجودة سينمائية وبشخصية بتتكلم بالعربي.\nلو مهتمين نتكلم في دقيقتين؟`
+};
+
+let clients=[];
+let activeNiche='الكل';
+let noteId=null,currentMsg='',currentMsgId=null,originalMsg='';
+let historyClientId=null;
+let deletedClient=null,deletedIndex=-1,toastTimer=null;
+let saveTimer=null;
+let statusCharts={};
+
+// ══ GITHUB GIST CLOUD SYNC ══
+let GIST_TOKEN='';
+let GIST_ID='';
+
+function loadCredentials(){
+  try{
+    GIST_TOKEN=localStorage.getItem('veo3_gh_token')||'';
+    GIST_ID=localStorage.getItem('veo3_gist_id')||'';
+  }catch(e){GIST_TOKEN='';GIST_ID='';}
+}
+
+function setSyncUI(st,msg){
+  const el=document.getElementById('syncBadge');
+  const dot=document.getElementById('cloudDot');
+  const noticeText=document.getElementById('cloudNoticeText');
+  const map={
+    syncing:['🔄','#F59E0B','جاري الحفظ...'],
+    ok:['☁️','#10B981',msg||'محفوظ على السحابة ✓'],
+    err:['⚠️','#EF4444',msg||'خطأ في الحفظ'],
+    nocon:['🔌','#94A3B8','غير متصل بالسحابة']
+  };
+  const [ico,col,txt]=map[st]||map.nocon;
+  if(el)el.innerHTML=`<span style="color:${col};font-size:12px;font-weight:600">${ico} ${txt}</span>`;
+  if(dot){
+    dot.className='cloud-status-dot';
+    if(st==='ok')dot.style.background='#10B981';
+    else if(st==='syncing'){dot.style.background='#F59E0B';dot.classList.add('syncing');}
+    else if(st==='err')dot.style.background='#EF4444';
+    else{dot.style.background='#94A3B8';dot.classList.add('offline');}
+  }
+  if(noticeText){
+    if(st==='ok')noticeText.innerHTML=`<strong>السحابة:</strong> ${txt} — بياناتك متحفظة وتقدر تفتح الداشبورد من أي متصفح أو جهاز`;
+    else if(st==='nocon')noticeText.innerHTML=`<strong>السحابة:</strong> غير مُعدَّة — اضغط ⚙️ سحابة لإعداد GitHub Gist وضمان حفظ بياناتك`;
+    else if(st==='err')noticeText.innerHTML=`<strong>⚠️ خطأ في الحفظ السحابي</strong> — البيانات محفوظة محلياً بس تأكد من الإنترنت والـ Token`;
+    else noticeText.innerHTML=`<strong>السحابة:</strong> ${txt}`;
+  }
+}
+
+const D=(daysAgo,hoursAgo=0)=>new Date(Date.now()-(daysAgo*86400000)-(hoursAgo*3600000)).toISOString();
+const SAMPLE_CLIENTS=[
+  // ══ صالونات (6 عملاء) ══
+  {id:'__sample__1',name:'صالون لمسة الجمال',phone:'971501234561',niche:'صالونات',source:'Ad Library',
+   weakness:'فيديو قديم وجودة ضعيفة',note:'بتعمل إعلانات دايماً بس جودتها وحشة — فرصة كويسة لفيديو Veo3',
+   status:'new',priority:'high',dealValue:'',reminder:'',
+   history:[{date:D(3),text:'شفت إعلانهم على Ad Library — فيديو من 2022 جودة ضعيفة'},{date:D(1),text:'بحثت عن رقمهم على Google Maps'}],
+   lastContact:null,createdAt:D(4),customMsg:''},
+  {id:'__sample__2',name:'مركز رانيا للتجميل',phone:'971506789016',niche:'صالونات',source:'Referral',
+   weakness:'مفيش صوت أو كلام',note:'اتفقنا على باقة 3 فيديوهات شهرياً — يدفع أول الشهر',
+   status:'closed',priority:'high',dealValue:'3500 درهم/شهر',reminder:'',
+   history:[{date:D(14),text:'جاء عن طريق توصية من عميل سابق'},{date:D(10),text:'اجتماع أول — شاف نماذج الشغل'},{date:D(6),text:'طلب عرض سعر'},{date:D(2),text:'✅ اتفقنا — 3 فيديوهات شهرياً بـ 3500 درهم'}],
+   lastContact:D(2),createdAt:D(15),customMsg:''},
+  {id:'__sample__3',name:'صالون ستايل فيب',phone:'971507891127',niche:'صالونات',source:'Instagram DM',
+   weakness:'مفيش كاراكتر بيتكلم',note:'صالون نسائي فاخر — جمهورهم على إنستجرام بشكل رئيسي',
+   status:'replied',priority:'high',dealValue:'2000',reminder:new Date(Date.now()+3*86400000).toISOString().slice(0,10),
+   history:[{date:D(5),text:'رسالة واتساب أولى بعد ما شفت إعلانهم'},{date:D(3),text:'ردوا وقالوا مهتمين — طلبوا نماذج الشغل'},{date:D(1),text:'بعتلهم 3 نماذج فيديو — ينتظرون الموافقة'}],
+   lastContact:D(1),createdAt:D(6),customMsg:''},
+  {id:'__sample__4',name:'صالون غلامور دبي',phone:'971509012238',niche:'صالونات',source:'Google Maps',
+   weakness:'التصميم قديم',note:'فرع في دبي مول — ميزانية تسويق كبيرة',
+   status:'interested',priority:'high',dealValue:'8000',reminder:'',
+   history:[{date:D(9),text:'شفت ريفيوهاتهم على Google Maps — 4.8 نجوم'},{date:D(7),text:'تواصلنا وعجبتهم الفكرة'},{date:D(4),text:'اجتماع زووم — طلبوا عرض سعر شامل'},{date:D(1),text:'بعتنا العرض — ينتظرون موافقة الإدارة'}],
+   lastContact:D(1),createdAt:D(10),customMsg:''},
+  {id:'__sample__5',name:'نوري للعناية بالشعر',phone:'971502345549',niche:'صالونات',source:'TikTok',
+   weakness:'مفيش call to action',note:'عندهم تيك توك بـ 50k متابع بس ما بيحولوش لعملاء',
+   status:'sent',priority:'medium',dealValue:'',reminder:'',
+   history:[{date:D(2),text:'شفت حسابهم على تيك توك — content كويس بس مفيش CTA'},{date:D(1),text:'أرسلنا رسالة واتساب — لسه ما ردوش'}],
+   lastContact:D(1),createdAt:D(3),customMsg:''},
+  {id:'__sample__6',name:'صالون أوركيد للسيدات',phone:'971503456650',niche:'صالونات',source:'Ad Library',
+   weakness:'صور بس — مفيش فيديو',note:'إعلانات صور فقط منذ 3 سنين — محتاجين تحديث عاجل',
+   status:'rejected',priority:'low',dealValue:'',reminder:'',
+   history:[{date:D(8),text:'تواصلنا بس قالوا عندهم عقد مع شركة تانية'},{date:D(6),text:'رفضوا العرض — هتابع بعد 3 أشهر'}],
+   lastContact:D(6),createdAt:D(9),customMsg:''},
+
+  // ══ عيادات (6 عملاء) ══
+  {id:'__sample__7',name:'عيادة د. أحمد النور للأسنان',phone:'971502345672',niche:'عيادات',source:'Google Maps',
+   weakness:'صور بس — مفيش فيديو',note:'رد وقال محتاج يفكر — فولو أب الأسبوع الجاي',
+   status:'replied',priority:'high',dealValue:'3500',reminder:new Date(Date.now()+2*86400000).toISOString().slice(0,10),
+   history:[{date:D(6),text:'شفت عيادته على Google Maps — صور فقط'},{date:D(4),text:'أرسلنا رسالة واتساب'},{date:D(2,6),text:'رد وقال محتاج يفكر — واعدنا الأسبوع الجاي'}],
+   lastContact:D(2,6),createdAt:D(7),customMsg:''},
+  {id:'__sample__8',name:'مركز كيور للرعاية الصحية',phone:'971504567783',niche:'عيادات',source:'Ad Library',
+   weakness:'الرسالة مش واضحة',note:'اتفقنا — 4 فيديوهات شهرياً لعيادة التجميل والأسنان',
+   status:'closed',priority:'high',dealValue:'6000 درهم/شهر',reminder:'',
+   history:[{date:D(18),text:'شفت إعلانهم — رسالة مبهمة جداً'},{date:D(14),text:'اجتماع أول مع المدير التسويقي'},{date:D(10),text:'عرض تفصيلي لـ 4 تخصصات'},{date:D(5),text:'✅ اتفقنا على عقد 6 أشهر — 6000 درهم/شهر'}],
+   lastContact:D(5),createdAt:D(20),customMsg:''},
+  {id:'__sample__9',name:'عيادة ميدكير التخصصية',phone:'971505678894',niche:'عيادات',source:'LinkedIn',
+   weakness:'مفيش كاراكتر بيتكلم',note:'عيادة داخلية وأطفال — محتاجين فيديو بالدكتور بنفسه',
+   status:'interested',priority:'high',dealValue:'4500',reminder:'',
+   history:[{date:D(11),text:'رسالة LinkedIn للمدير'},{date:D(8),text:'موافقة على الاجتماع'},{date:D(5),text:'اجتماع أونلاين — معجبهم الفكرة جداً'},{date:D(2),text:'طلبوا عرض سعر لـ 3 أطباء مختلفين'}],
+   lastContact:D(2),createdAt:D(12),customMsg:''},
+  {id:'__sample__10',name:'عيادة سمايل فرست',phone:'971507890005',niche:'عيادات',source:'Instagram DM',
+   weakness:'فيديو قديم وجودة ضعيفة',note:'عيادة أسنان — فيديو ترويجي قديم جداً من 2020',
+   status:'new',priority:'medium',dealValue:'',reminder:'',
+   history:[{date:D(1),text:'شفت إعلانهم على إنستجرام — جودة ضعيفة جداً'}],
+   lastContact:null,createdAt:D(1),customMsg:''},
+  {id:'__sample__11',name:'مركز هيلث بلس الطبي',phone:'971508901116',niche:'عيادات',source:'Google Maps',
+   weakness:'مفيش صوت أو كلام',note:'مركز متكامل — يدرسون التوسع في التسويق الرقمي',
+   status:'sent',priority:'medium',dealValue:'',reminder:new Date(Date.now()+1*86400000).toISOString().slice(0,10),
+   history:[{date:D(3),text:'رسالة واتساب مع نموذج فيديو عيادة مشابهة'},{date:D(2),text:'فتحوا الرسالة — لسه ما ردوش'}],
+   lastContact:D(2),createdAt:D(4),customMsg:''},
+  {id:'__sample__12',name:'عيادة درماكير للجلدية',phone:'971509012227',niche:'عيادات',source:'Referral',
+   weakness:'التصميم قديم',note:'دكتورة متحمسة جداً — بس محتاجة موافقة شريكها',
+   status:'replied',priority:'medium',dealValue:'2800',reminder:new Date(Date.now()+4*86400000).toISOString().slice(0,10),
+   history:[{date:D(7),text:'توصية من عميل عيادة مكيور'},{date:D(5),text:'اتصال مباشر — شرحنا الخدمة'},{date:D(3),text:'معجبة بالفكرة — هتتكلم مع شريكها وترد'}],
+   lastContact:D(3),createdAt:D(8),customMsg:''},
+
+  // ══ عقارات (6 عملاء) ══
+  {id:'__sample__13',name:'مكتب الوطن للعقارات',phone:'971503456783',niche:'عقارات',source:'Ad Library',
+   weakness:'مفيش كاراكتر بيتكلم',note:'مهتم جداً — طلب عرض سعر كامل لـ 5 مشاريع',
+   status:'interested',priority:'high',dealValue:'12000',reminder:'',
+   history:[{date:D(10),text:'شفت إعلانهم — مفيش وجه بيتكلم'},{date:D(7),text:'واتساب أولي'},{date:D(4),text:'اجتماع زووم — أعجبه النموذج كتير'},{date:D(1),text:'طلب عرض سعر لـ 5 مشاريع عقارية مختلفة'}],
+   lastContact:D(1),createdAt:D(11),customMsg:''},
+  {id:'__sample__14',name:'شركة بريميوم هومز',phone:'971501234460',niche:'عقارات',source:'LinkedIn',
+   weakness:'مفيش call to action',note:'شركة كبيرة — قرار الإدارة العليا محتاج وقت',
+   status:'replied',priority:'high',dealValue:'20000',reminder:new Date(Date.now()+5*86400000).toISOString().slice(0,10),
+   history:[{date:D(12),text:'رسالة LinkedIn للـ CMO'},{date:D(9),text:'اجتماع مع فريق التسويق'},{date:D(6),text:'طلبوا نماذج لمشاريع عقارية فاخرة'},{date:D(3),text:'قدمنا 4 نماذج — ينتظرون موافقة CEO'}],
+   lastContact:D(3),createdAt:D(14),customMsg:''},
+  {id:'__sample__15',name:'العقارية الذهبية',phone:'971502345571',niche:'عقارات',source:'Ad Library',
+   weakness:'فيديو قديم وجودة ضعيفة',note:'اتفقنا — فيديو لكل مشروع جديد',
+   status:'closed',priority:'high',dealValue:'5500 درهم/فيديو',reminder:'',
+   history:[{date:D(20),text:'شفت إعلانهم — فيديوهات قديمة مش احترافية'},{date:D(16),text:'تواصل أولي'},{date:D(12),text:'عرضنا نماذج بجودة سينمائية'},{date:D(7),text:'✅ اتفقنا — 5500 درهم لكل فيديو مشروع'}],
+   lastContact:D(7),createdAt:D(22),customMsg:''},
+  {id:'__sample__16',name:'دريم لاند للتطوير',phone:'971503456682',niche:'عقارات',source:'Google Maps',
+   weakness:'الرسالة مش واضحة',note:'مشاريع في الشارقة وعجمان — محتاجين تواصل واضح مع المشتري',
+   status:'new',priority:'medium',dealValue:'',reminder:'',
+   history:[{date:D(1),text:'شفت موقعهم وإعلاناتهم — رسالة غير واضحة'}],
+   lastContact:null,createdAt:D(2),customMsg:''},
+  {id:'__sample__17',name:'مكتب النيل العقاري',phone:'971504567793',niche:'عقارات',source:'Referral',
+   weakness:'صور بس — مفيش فيديو',note:'مكتب صغير بس نشط — ميزانية محدودة',
+   status:'sent',priority:'low',dealValue:'',reminder:'',
+   history:[{date:D(3),text:'توصية من شركة العقارية الذهبية'},{date:D(2),text:'رسالة واتساب مع عرض خاص للمكاتب الصغيرة'}],
+   lastContact:D(2),createdAt:D(4),customMsg:''},
+  {id:'__sample__18',name:'سكاي فيو بروبيرتيز',phone:'971505678804',niche:'عقارات',source:'Instagram DM',
+   weakness:'التصميم قديم',note:'عقارات فاخرة في دبي — ميزانية تسويق ضخمة',
+   status:'new',priority:'high',dealValue:'',reminder:new Date(Date.now()+1*86400000).toISOString().slice(0,10),
+   history:[{date:D(0,3),text:'شفت إعلانهم على إنستجرام — تصميم قديم لا يعكس الفخامة'}],
+   lastContact:null,createdAt:D(0,4),customMsg:''},
+
+  // ══ مطاعم (6 عملاء) ══
+  {id:'__sample__19',name:'مطعم الأصالة الخليجي',phone:'971504567894',niche:'مطاعم',source:'Google Maps',
+   weakness:'مفيش call to action',note:'بيشتغل على إنستجرام بس مفيش فيديو احترافي',
+   status:'sent',priority:'medium',dealValue:'',reminder:'',
+   history:[{date:D(2),text:'شفت صفحتهم على Google Maps — تقييم 4.6'},{date:D(1),text:'رسالة واتساب — لسه ما ردوش'}],
+   lastContact:D(1),createdAt:D(2),customMsg:''},
+  {id:'__sample__20',name:'مطبخ أم السعد',phone:'971505678905',niche:'مطاعم',source:'Instagram DM',
+   weakness:'مفيش صوت أو كلام',note:'أكل بيتي شعبي — جمهور كبير على إنستجرام، محتاجين فيديو طبخ احترافي',
+   status:'interested',priority:'high',dealValue:'4000',reminder:'',
+   history:[{date:D(8),text:'DM على إنستجرام لصاحب المطعم'},{date:D(6),text:'رد إيجابي جداً — طلب نماذج'},{date:D(4),text:'عرضنا 3 نماذج فيديو طبخ'},{date:D(2),text:'معجب جداً — هيرد بعد مراجعة ميزانية رمضان'}],
+   lastContact:D(2),createdAt:D(9),customMsg:''},
+  {id:'__sample__21',name:'مطعم برازي للمشويات',phone:'971506789016',niche:'مطاعم',source:'Ad Library',
+   weakness:'فيديو قديم وجودة ضعيفة',note:'اتفقنا — فيديو أسبوعي للمنيو الجديد والعروض',
+   status:'closed',priority:'high',dealValue:'2800 درهم/شهر',reminder:'',
+   history:[{date:D(15),text:'شفت إعلانهم — فيديو قديم والأكل مش ظاهر كويس'},{date:D(12),text:'رسالة واتساب مع مثال فيديو مشويات'},{date:D(9),text:'اتصال هاتفي — متحمسين جداً'},{date:D(5),text:'✅ اتفقنا — 4 فيديوهات شهرياً بـ 2800 درهم'}],
+   lastContact:D(5),createdAt:D(16),customMsg:''},
+  {id:'__sample__22',name:'كافيه مود الكوفي',phone:'971507890027',niche:'مطاعم',source:'TikTok',
+   weakness:'مفيش كاراكتر بيتكلم',note:'كافيه ترندي — محتاجين محتوى يليق بأجواء المكان',
+   status:'replied',priority:'medium',dealValue:'1800',reminder:new Date(Date.now()+2*86400000).toISOString().slice(0,10),
+   history:[{date:D(5),text:'شفت حسابهم على تيك توك — 80k متابع'},{date:D(3),text:'DM على إنستجرام'},{date:D(1,8),text:'ردوا وطلبوا اجتماع قريب'}],
+   lastContact:D(1,8),createdAt:D(6),customMsg:''},
+  {id:'__sample__23',name:'مطعم دار الشيف',phone:'971508901138',niche:'مطاعم',source:'Google Maps',
+   weakness:'صور بس — مفيش فيديو',note:'مطعم راقي — محتاجين فيديو يعكس مستوى المكان',
+   status:'new',priority:'medium',dealValue:'',reminder:'',
+   history:[{date:D(0,5),text:'شفت ريفيوهاتهم على Google Maps — 4.9 نجوم ولا فيديو واحد'}],
+   lastContact:null,createdAt:D(0,6),customMsg:''},
+  {id:'__sample__24',name:'مطعم هوانيم للمأكولات البحرية',phone:'971509012249',niche:'مطاعم',source:'Referral',
+   weakness:'الرسالة مش واضحة',note:'عميل من توصية مطعم برازي — مهتم من الأول',
+   status:'interested',priority:'high',dealValue:'3200',reminder:'',
+   history:[{date:D(6),text:'توصية من مطعم برازي'},{date:D(4),text:'اتصال هاتفي مباشر'},{date:D(2),text:'اجتماع في المطعم — شاف النماذج وأعجبه'},{date:D(0,2),text:'طلب عرض سعر لفيديوهات المنيو الصيفي'}],
+   lastContact:D(0,2),createdAt:D(7),customMsg:''},
+
+  // ══ تعليم (6 عملاء) ══
+  {id:'__sample__25',name:'أكاديمية النجاح للتعليم',phone:'971505678905',niche:'تعليم',source:'Instagram DM',
+   weakness:'التصميم قديم',note:'كورسات أونلاين — جمهورهم شباب، محتاجين محتوى عصري',
+   status:'new',priority:'medium',dealValue:'',reminder:new Date(Date.now()+86400000).toISOString().slice(0,10),
+   history:[{date:D(1,2),text:'شفت إعلانهم على إنستجرام — تصميم قديم جداً'}],
+   lastContact:null,createdAt:D(1),customMsg:''},
+  {id:'__sample__26',name:'منصة تعلّم ديجيتال',phone:'971506789116',niche:'تعليم',source:'LinkedIn',
+   weakness:'مفيش كاراكتر بيتكلم',note:'اتفقنا على فيديو ترويجي لكل كورس جديد',
+   status:'closed',priority:'high',dealValue:'4500 درهم/شهر',reminder:'',
+   history:[{date:D(22),text:'رسالة LinkedIn للمؤسس'},{date:D(18),text:'اجتماع زووم مع فريق التسويق'},{date:D(14),text:'قدمنا نموذج لكورس برمجة'},{date:D(9),text:'✅ اتفقنا — 2 فيديو شهرياً بـ 4500 درهم'}],
+   lastContact:D(9),createdAt:D(25),customMsg:''},
+  {id:'__sample__27',name:'مركز فيوتشر لتعليم الأطفال',phone:'971507890227',niche:'تعليم',source:'Google Maps',
+   weakness:'مفيش صوت أو كلام',note:'محتاجين فيديو بشخصية كرتونية أو مدرسة تتكلم للأطفال',
+   status:'interested',priority:'high',dealValue:'5500',reminder:'',
+   history:[{date:D(9),text:'شفت إعلانهم — أنشطة كتير بس مفيش صوت'},{date:D(7),text:'تواصل مع المديرة'},{date:D(4),text:'اجتماع في المركز — عجبتهم فكرة الكاراكتر للأطفال'},{date:D(1),text:'طلبوا عرض سعر لـ 3 فيديوهات تعريفية'}],
+   lastContact:D(1),createdAt:D(10),customMsg:''},
+  {id:'__sample__28',name:'معهد برايت فيوتشر للغات',phone:'971508901338',niche:'تعليم',source:'Ad Library',
+   weakness:'الرسالة مش واضحة',note:'ميزانية تسويق كبيرة — بس مش عارفين يوصلوا رسالتهم',
+   status:'replied',priority:'high',dealValue:'7000',reminder:new Date(Date.now()+3*86400000).toISOString().slice(0,10),
+   history:[{date:D(7),text:'شفت إعلانهم على Ad Library — 5 إعلانات والرسالة مبهمة'},{date:D(5),text:'رسالة واتساب مع تحليل إعلاناتهم'},{date:D(3),text:'ردوا وقالوا مهتمين — ينتظرون اجتماع مع المدير'}],
+   lastContact:D(3),createdAt:D(8),customMsg:''},
+  {id:'__sample__29',name:'أكاديمية كود بلس للبرمجة',phone:'971509012449',niche:'تعليم',source:'TikTok',
+   weakness:'فيديو قديم وجودة ضعيفة',note:'كورسات برمجة — جمهور شباب تقني على تيك توك',
+   status:'sent',priority:'medium',dealValue:'',reminder:'',
+   history:[{date:D(2),text:'شفت حسابهم على تيك توك — فيديوهات قديمة'},{date:D(1),text:'رسالة واتساب مع مثال فيديو تقني'}],
+   lastContact:D(1),createdAt:D(3),customMsg:''},
+  {id:'__sample__30',name:'سنتر ليدرز للتدريب',phone:'971501234560',niche:'تعليم',source:'Referral',
+   weakness:'مفيش call to action',note:'دورات للشركات والأفراد — تدريب قيادي ومهني',
+   status:'rejected',priority:'low',dealValue:'',reminder:'',
+   history:[{date:D(10),text:'توصية من منصة تعلّم'},{date:D(8),text:'اتصال هاتفي'},{date:D(6),text:'مش مهتمين حالياً — عندهم عقد مع شركة إنتاج'}],
+   lastContact:D(6),createdAt:D(11),customMsg:''},
+
+  {id:'__sample__31',name:'عيادة لايت سكين للتجميل',phone:'971551122334',niche:'عيادات',source:'Instagram DM',
+   weakness:'مفيش كاراكتر بيتكلم',note:'متخصصة في الليزر والعناية بالبشرة — دكتورة شاطرة بس مش عايزة تظهر، هنساعدها بكاراكتر AI',
+   status:'interested',priority:'high',dealValue:'4200',reminder:'',
+   history:[{date:D(8),text:'DM على إنستجرام — شفت إعلانهم صور فقط'},{date:D(6),text:'ردت بسرعة وقالت مهتمة جداً'},{date:D(4),text:'كول زووم 30 دقيقة — عجبتها فكرة الكاراكتر'},{date:D(1),text:'طلبت عرض سعر + مثال فيديو بشرة'}],
+   lastContact:D(1),createdAt:D(9),customMsg:''},
+
+  {id:'__sample__32',name:'مطعم تاكو هاوس',phone:'971552233445',niche:'مطاعم',source:'TikTok',
+   weakness:'فيديو قديم وجودة ضعيفة',note:'مطعم مكسيكي ترندي في JBR — 120k على تيك توك بس الفيديوهات مش احترافية',
+   status:'replied',priority:'high',dealValue:'3800',reminder:new Date(Date.now()+2*86400000).toISOString().slice(0,10),
+   history:[{date:D(5),text:'شفت تيك توكهم — محتوى كتير بس جودة منخفضة'},{date:D(3),text:'رسالة واتساب مع مقارنة before/after'},{date:D(1),text:'رد المدير — معجب جداً، هيتكلم مع صاحب المطعم ويرد'}],
+   lastContact:D(1),createdAt:D(6),customMsg:''},
+
+  {id:'__sample__33',name:'مجمع نوفا العقاري',phone:'971553344556',niche:'عقارات',source:'Ad Library',
+   weakness:'الرسالة مش واضحة',note:'مشروع سكني جديد في أبوظبي — لانش قريب ومحتاجين فيديو ترويجي عاجل',
+   status:'new',priority:'high',dealValue:'',reminder:new Date(Date.now()+86400000).toISOString().slice(0,10),
+   history:[{date:D(0,4),text:'شفت إعلانهم — ميزانية ضخمة بس الرسالة مش واضحة'}],
+   lastContact:null,createdAt:D(0,5),customMsg:''},
+
+  {id:'__sample__34',name:'صالون بلاتينوم للرجال',phone:'971554455667',niche:'صالونات',source:'Google Maps',
+   weakness:'مفيش call to action',note:'باربر شوب فاخر في داون تاون — 4.9 نجوم على Google بس مفيش فيديو واحد',
+   status:'sent',priority:'medium',dealValue:'',reminder:'',
+   history:[{date:D(3),text:'شفت ريفيوهاتهم الممتازة على Google Maps'},{date:D(2),text:'رسالة واتساب مع مثال فيديو باربر شوب راقي'},{date:D(1),text:'فتحوا الرسالة — لسه ما ردوش'}],
+   lastContact:D(1),createdAt:D(4),customMsg:''},
+
+  {id:'__sample__35',name:'أكاديمية فن الطبخ',phone:'971555566778',niche:'تعليم',source:'Instagram DM',
+   weakness:'صور بس — مفيش فيديو',note:'كورسات طبخ أونلاين وأوفلاين — جمهور سيدات خليجيات، محتاجين فيديو يجذب التسجيل',
+   status:'closed',priority:'high',dealValue:'2500 درهم/شهر',reminder:'',
+   history:[{date:D(13),text:'DM على إنستجرام — صفحتهم صور فقط'},{date:D(10),text:'ردوا وطلبوا اجتماع'},{date:D(7),text:'زووم مع المؤسسة — عجبتها الفكرة'},{date:D(4),text:'بعتنا نموذج فيديو وصفة'},{date:D(1),text:'✅ اتفقنا — 2 فيديو شهرياً بـ 2500 درهم'}],
+   lastContact:D(1),createdAt:D(14),customMsg:''},
+
+  // ══ شركات (6 عملاء) ══
+  {id:'__sample__36',name:'شركة ألفا للمقاولات',phone:'971556677889',niche:'شركات',source:'LinkedIn',
+   weakness:'مفيش كاراكتر بيتكلم',note:'شركة مقاولات كبيرة في دبي — محتاجين فيديو مؤسسي يعرّف بالشركة وإنجازاتها',
+   status:'interested',priority:'high',dealValue:'15000',reminder:'',
+   history:[{date:D(10),text:'تواصل على LinkedIn مع المدير التسويقي'},{date:D(8),text:'اجتماع أونلاين — شرحنا فكرة الفيديو المؤسسي'},{date:D(5),text:'طلبوا نماذج لشركات مقاولات مشابهة'},{date:D(2),text:'بعتنا 3 نماذج — ينتظرون موافقة مجلس الإدارة'}],
+   lastContact:D(2),createdAt:D(11),customMsg:''},
+
+  {id:'__sample__37',name:'مجموعة ستار للتوزيع',phone:'971557788990',niche:'شركات',source:'Ad Library',
+   weakness:'الرسالة مش واضحة',note:'شركة توزيع منتجات غذائية — إعلاناتهم كتير بس مش واضح إيش يبيعوا',
+   status:'replied',priority:'high',dealValue:'8500',reminder:new Date(Date.now()+3*86400000).toISOString().slice(0,10),
+   history:[{date:D(7),text:'شفت 8 إعلانات على Ad Library — كلها مبهمة'},{date:D(5),text:'رسالة واتساب مع تحليل إعلاناتهم'},{date:D(2),text:'رد مدير التسويق — معجب بالتحليل، طلب اجتماع الأسبوع الجاي'}],
+   lastContact:D(2),createdAt:D(8),customMsg:''},
+
+  {id:'__sample__38',name:'شركة برايم للأمن والحراسة',phone:'971558899001',niche:'شركات',source:'Google Maps',
+   weakness:'صور بس — مفيش فيديو',note:'اتفقنا — فيديو تعريفي للشركة وفيديو لكل خدمة',
+   status:'closed',priority:'high',dealValue:'12000 درهم',reminder:'',
+   history:[{date:D(18),text:'شفت موقعهم — صور فقط ولا فيديو'},{date:D(15),text:'تواصل مع المدير العام'},{date:D(11),text:'اجتماع في مقر الشركة'},{date:D(7),text:'قدمنا عرض شامل لـ 5 فيديوهات'},{date:D(3),text:'✅ اتفقنا — 12000 درهم لباقة الفيديوهات الكاملة'}],
+   lastContact:D(3),createdAt:D(20),customMsg:''},
+
+  {id:'__sample__39',name:'مؤسسة النور للاستشارات',phone:'971559900112',niche:'شركات',source:'Referral',
+   weakness:'فيديو قديم وجودة ضعيفة',note:'استشارات مالية وقانونية — فيديو قديم من 2019 مش يعكس مستوى الشركة',
+   status:'new',priority:'medium',dealValue:'',reminder:new Date(Date.now()+2*86400000).toISOString().slice(0,10),
+   history:[{date:D(1),text:'توصية من شركة برايم للأمن'},{date:D(0,3),text:'شفت موقعهم — فيديو تعريفي قديم جداً'}],
+   lastContact:null,createdAt:D(1),customMsg:''},
+
+  {id:'__sample__40',name:'شركة تك بريدج للحلول الرقمية',phone:'971550011223',niche:'شركات',source:'LinkedIn',
+   weakness:'مفيش call to action',note:'شركة IT وتطوير تطبيقات — محتاجين فيديو case study لعملاءهم',
+   status:'sent',priority:'medium',dealValue:'',reminder:'',
+   history:[{date:D(4),text:'رسالة LinkedIn للـ CEO'},{date:D(3),text:'فتح الرسالة — لسه ما رد'},{date:D(1),text:'فولو أب ثاني على واتساب'}],
+   lastContact:D(1),createdAt:D(5),customMsg:''},
+
+  {id:'__sample__41',name:'مجموعة الخليج للضيافة',phone:'971550122334',niche:'شركات',source:'Ad Library',
+   weakness:'مفيش صوت أو كلام',note:'شركة إدارة فنادق وضيافة — إعلانات بصور فقط ومفيش صوت أو شرح',
+   status:'new',priority:'high',dealValue:'',reminder:'',
+   history:[{date:D(0,5),text:'شفت إعلاناتهم — 6 إعلانات نشطة كلها صامتة'}],
+   lastContact:null,createdAt:D(0,6),customMsg:''},
+];
+
+async function cloudLoad(){
+  loadCredentials();
+  if(!GIST_TOKEN||!GIST_ID){
+    setSyncUI('nocon');
+    let local=null;
+    try{const raw=localStorage.getItem('veo3_v5');if(raw)local=JSON.parse(raw);}catch(e){}
+    clients=(local&&local.length>0)?local:SAMPLE_CLIENTS;
+    renderAll();
+    if(!local||local.length===0)setTimeout(showSetup,2500);
+    return;
+  }
+  setSyncUI('syncing');
+  try{
+    const r=await fetch(`https://api.github.com/gists/${GIST_ID}`,{
+      headers:{Authorization:`token ${GIST_TOKEN}`,Accept:'application/vnd.github+json'}
+    });
+    if(!r.ok)throw new Error('فشل الاتصال: '+r.status);
+    const data=await r.json();
+    const raw=data.files?.['veo3_clients.json']?.content;
+    if(raw){
+      const parsed=JSON.parse(raw);
+      clients=parsed.map(migrateClient);
+      // also update localStorage as backup
+      try{localStorage.setItem('veo3_v5',JSON.stringify(clients));}catch(e){}
+    }
+    setSyncUI('ok','محمّل من السحابة ✓');
+  }catch(e){
+    setSyncUI('err','فشل التحميل من السحابة');
+    try{const raw=localStorage.getItem('veo3_v5');if(raw)clients=JSON.parse(raw).map(migrateClient);}catch(e2){}
+  }
+  renderAll();
+}
+
+// migrate old client objects to new schema
+function migrateClient(c){
+  return {
+    id:c.id||Date.now().toString(),
+    name:c.name||'',phone:c.phone||'',
+    niche:c.niche||'غيره',source:c.source||'Ad Library',
+    weakness:c.weakness||'',note:c.note||'',
+    status:c.status||'new',
+    priority:c.priority||'medium',
+    dealValue:c.dealValue||'',
+    reminder:c.reminder||'',
+    history:c.history||[],
+    lastContact:c.lastContact||null,
+    createdAt:c.createdAt||new Date().toISOString(),
+    customMsg:c.customMsg||''
+  };
+}
+
+const isSample=()=>clients.length>0&&clients.every(c=>c.id.startsWith('__sample__'));
+
+async function cloudSave(){
+  if(isSample())return;
+  // always save locally first as backup
+  try{localStorage.setItem('veo3_v5',JSON.stringify(clients));}catch(e){}
+  if(!GIST_TOKEN||!GIST_ID){setSyncUI('nocon');return;}
+  setSyncUI('syncing');
+  try{
+    const r=await fetch(`https://api.github.com/gists/${GIST_ID}`,{
+      method:'PATCH',
+      headers:{Authorization:`token ${GIST_TOKEN}`,Accept:'application/vnd.github+json','Content-Type':'application/json'},
+      body:JSON.stringify({files:{'veo3_clients.json':{content:JSON.stringify(clients)}}})
+    });
+    if(!r.ok)throw new Error(r.status);
+    setSyncUI('ok',`حُفظ ${new Date().toLocaleTimeString('ar-EG')} ✓`);
+  }catch(e){
+    setSyncUI('err','فشل الحفظ السحابي — محفوظ محلياً');
+  }
+}
+
+const save=()=>{
+  clearTimeout(saveTimer);
+  setSyncUI('syncing');
+  saveTimer=setTimeout(cloudSave,1200);
+};
+
+async function createGist(token){
+  const r=await fetch('https://api.github.com/gists',{
+    method:'POST',
+    headers:{Authorization:`token ${token}`,Accept:'application/vnd.github+json','Content-Type':'application/json'},
+    body:JSON.stringify({description:'Veo3 Dashboard Data',public:false,files:{'veo3_clients.json':{content:'[]'}}})
+  });
+  if(!r.ok)throw new Error('Token غلط أو ما عندوش صلاحية gist');
+  const d=await r.json();
+  return d.id;
+}
+
+function showSetup(){
+  loadCredentials();
+  document.getElementById('ghToken').value=GIST_TOKEN||'';
+  document.getElementById('ghGistId').value=GIST_ID||'';
+  document.getElementById('setupStatus').textContent='';
+  document.getElementById('setupOverlay').classList.add('open');
+}
+function closeSetup(){document.getElementById('setupOverlay').classList.remove('open');}
+
+async function saveSetup(){
+  const tok=document.getElementById('ghToken').value.trim();
+  const gid=document.getElementById('ghGistId').value.trim();
+  const statusEl=document.getElementById('setupStatus');
+  if(!tok){statusEl.textContent='⚠️ أدخل الـ Token';statusEl.style.color='#EF4444';return;}
+  statusEl.style.color='#F59E0B';statusEl.textContent='🔄 جاري التحقق...';
+  try{
+    let gistId=gid;
+    if(!gistId){
+      statusEl.textContent='🔄 جاري إنشاء Gist جديد...';
+      gistId=await createGist(tok);
+    }
+    GIST_TOKEN=tok;GIST_ID=gistId;
+    try{
+      localStorage.setItem('veo3_gh_token',tok);
+      localStorage.setItem('veo3_gist_id',gistId);
+    }catch(e){}
+    document.getElementById('ghGistId').value=gistId;
+    statusEl.style.color='#10B981';
+    statusEl.textContent='✅ تم الاتصال بنجاح! الآن بياناتك محفوظة على السحابة';
+    setTimeout(()=>{closeSetup();cloudLoad();},1400);
+  }catch(e){
+    statusEl.style.color='#EF4444';
+    statusEl.textContent='❌ '+e.message;
+  }
+}
+
+function clearSetup(){
+  if(!confirm('هيمسح إعدادات السحابة. متأكد؟'))return;
+  GIST_TOKEN='';GIST_ID='';
+  try{
+    localStorage.removeItem('veo3_gh_token');
+    localStorage.removeItem('veo3_gist_id');
+  }catch(e){}
+  location.reload();
+}
+
+// ══ HELPERS ══
+const getList=()=>activeNiche==='الكل'?clients:clients.filter(c=>c.niche===activeNiche);
+const getMsg=(w,n)=>(MSGS[w]||MSGS.default)(n);
+const needsFU=c=>{
+  if(c.reminder){
+    const rd=new Date(c.reminder);rd.setHours(0,0,0,0);
+    const today=new Date();today.setHours(0,0,0,0);
+    return rd<=today&&!['rejected','closed'].includes(c.status);
+  }
+  return c.lastContact&&!['new','rejected','closed'].includes(c.status)&&(Date.now()-new Date(c.lastContact))/36e5>=48;
+};
+const fmtDate=iso=>{if(!iso)return'';const d=new Date(iso);return`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`};
+const fmtDateTime=iso=>{if(!iso)return'';const d=new Date(iso);return`${d.getDate()}/${d.getMonth()+1} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;};
+const nicheIdx=n=>Math.max(NICHES.indexOf(n),0);
+const initials=name=>name.trim().split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'؟';
+const priLabel={high:'🔴 عالية',medium:'🟡 متوسطة',low:'⚪ منخفضة'};
+const priClass={high:'pri-high',medium:'pri-med',low:'pri-low'};
+
+let currentView='grid';
+function setView(v){
+  currentView=v;
+  document.getElementById('vGrid').classList.toggle('active',v==='grid');
+  document.getElementById('vKan').classList.toggle('active',v==='kanban');
+  document.getElementById('grid').style.display=v==='grid'?'':'none';
+  document.getElementById('kanban').style.display=v==='kanban'?'flex':'none';
+  document.getElementById('fStatus').style.display=v==='kanban'?'none':'';
+  renderAll();
+}
+
+function renderAll(){
+  const banner=document.getElementById('sampleBanner');
+  if(banner)banner.style.display=isSample()?'':'none';
+  renderNiches();
+  renderStats();
+  renderCharts();
+  if(currentView==='grid')renderGrid();
+  else renderKanban();
+}
+
+function renderNiches(){
+  document.getElementById('nichesBar').innerHTML=NICHES.map((n,i)=>{
+    const cnt=(n==='الكل'?clients:clients.filter(c=>c.niche===n)).length;
+    return `<button class="ntab${activeNiche===n?' active':''}" onclick="setNiche('${n}')">
+      <span class="ndot" style="background:${NC[i]}"></span>${n}<span class="ncnt">${cnt}</span>
+    </button>`;
+  }).join('');
+}
+function setNiche(n){activeNiche=n;renderAll();}
+
+function renderStats(){
+  const l=getList(),t=l.length;
+  const sent=l.filter(c=>c.status!=='new').length;
+  const inter=l.filter(c=>['interested','closed'].includes(c.status)).length;
+  const cl=l.filter(c=>c.status==='closed').length;
+  const conv=t?Math.round(inter/t*100):0;
+  const totalDeal=l.filter(c=>c.status==='closed'&&c.dealValue).reduce((s,c)=>{
+    const n=parseFloat(c.dealValue.replace(/[^\d.]/g,''));
+    return s+(isNaN(n)?0:n);
+  },0);
+  const fuCount=l.filter(needsFU).length;
+  document.getElementById('statsBar').innerHTML=`
+    <div class="scard">
+      <div class="scard-top"><div class="slabel">إجمالي</div><div class="sicon">👥</div></div>
+      <div class="sval" style="color:#4F5FF0">${t}</div>
+      <div class="ssub">${activeNiche}</div>
+    </div>
+    <div class="scard">
+      <div class="scard-top"><div class="slabel">تم الإرسال</div><div class="sicon">📤</div></div>
+      <div class="sval" style="color:#0EA5E9">${sent}</div>
+      <div class="ssub">من ${t} عميل</div>
+      <div class="sbar"><div class="sbar-fill" style="width:${t?sent/t*100:0}%;background:#0EA5E9"></div></div>
+    </div>
+    <div class="scard">
+      <div class="scard-top"><div class="slabel">مهتمين</div><div class="sicon">✅</div></div>
+      <div class="sval" style="color:#10B981">${inter}</div>
+      <div class="ssub">اتفقنا: ${cl}</div>
+      <div class="sbar"><div class="sbar-fill" style="width:${t?inter/t*100:0}%;background:#10B981"></div></div>
+    </div>
+    <div class="scard">
+      <div class="scard-top"><div class="slabel">نسبة التحويل</div><div class="sicon">📈</div></div>
+      <div class="sval" style="color:#F59E0B">${conv}%</div>
+      <div class="ssub">مهتم ÷ إجمالي</div>
+      <div class="sbar"><div class="sbar-fill" style="width:${conv}%;background:#F59E0B"></div></div>
+    </div>
+    <div class="scard">
+      <div class="scard-top"><div class="slabel">إجمالي الصفقات</div><div class="sicon">💰</div></div>
+      <div class="sval" style="color:#8B5CF6;font-size:${totalDeal>9999?'20px':'28px'}">${totalDeal?totalDeal.toLocaleString('ar'):fuCount>0?fuCount:'—'}</div>
+      <div class="ssub">${totalDeal?'درهم مغلق':'فولو أب مطلوب'}</div>
+      ${fuCount>0&&!totalDeal?`<div class="sbar"><div class="sbar-fill" style="width:${t?fuCount/t*100:0}%;background:#EF4444"></div></div>`:''}
+    </div>`;
+  document.getElementById('htotal').textContent=clients.length;
+}
+
+function renderCharts(){
+  const l=getList();
+  document.getElementById('chartsSection').innerHTML=`
+    <div class="chart-card">
+      <div class="chart-title">توزيع الحالات</div>
+      <div class="chart-wrap"><canvas id="chartStatus"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">توزيع النيشات</div>
+      <div class="chart-wrap"><canvas id="chartNiche"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">المصادر</div>
+      <div class="chart-wrap"><canvas id="chartSource"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">إضافات آخر 4 أسابيع</div>
+      <div class="chart-wrap"><canvas id="chartWeekly"></canvas></div>
+    </div>`;
+
+  // Status chart
+  const statusKeys=Object.keys(STATUSES);
+  const statusData=statusKeys.map(k=>l.filter(c=>c.status===k).length);
+  const statusColors=statusKeys.map(k=>STCOL[k]);
+  new Chart(document.getElementById('chartStatus'),{
+    type:'doughnut',
+    data:{labels:statusKeys.map(k=>STATUSES[k]),datasets:[{data:statusData,backgroundColor:statusColors,borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:10},padding:8,boxWidth:10}}}}
+  });
+
+  // Niche chart
+  const nicheKeys=NICHES.slice(1);
+  const nicheData=nicheKeys.map(n=>l.filter(c=>c.niche===n).length);
+  new Chart(document.getElementById('chartNiche'),{
+    type:'bar',
+    data:{labels:nicheKeys,datasets:[{data:nicheData,backgroundColor:NC.slice(1),borderRadius:6,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{size:10}},grid:{color:'rgba(0,0,0,.04)'}},x:{ticks:{font:{size:10}},grid:{display:false}}}}
+  });
+
+  // Source chart
+  const srcMap={};
+  l.forEach(c=>{srcMap[c.source]=(srcMap[c.source]||0)+1;});
+  const srcKeys=Object.keys(srcMap);
+  const srcColors=['#4F5FF0','#10B981','#EC4899','#F97316','#0EA5E9','#8B5CF6','#94A3B8'];
+  new Chart(document.getElementById('chartSource'),{
+    type:'doughnut',
+    data:{labels:srcKeys,datasets:[{data:srcKeys.map(k=>srcMap[k]),backgroundColor:srcColors,borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:10},padding:8,boxWidth:10}}}}
+  });
+
+  // Weekly growth chart (last 4 weeks)
+  const weeks=['أسبوع 4','أسبوع 3','أسبوع 2','هذا الأسبوع'];
+  const now=Date.now();
+  const weekBuckets=[0,0,0,0];
+  l.forEach(c=>{
+    if(!c.createdAt)return;
+    const diffDays=(now-new Date(c.createdAt))/86400000;
+    if(diffDays<7)weekBuckets[3]++;
+    else if(diffDays<14)weekBuckets[2]++;
+    else if(diffDays<21)weekBuckets[1]++;
+    else if(diffDays<28)weekBuckets[0]++;
+  });
+  new Chart(document.getElementById('chartWeekly'),{
+    type:'line',
+    data:{labels:weeks,datasets:[{data:weekBuckets,borderColor:'#4F5FF0',backgroundColor:'rgba(79,95,240,.12)',fill:true,tension:.4,pointBackgroundColor:'#4F5FF0',pointRadius:4,pointHoverRadius:6,borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,font:{size:10}},grid:{color:'rgba(0,0,0,.04)'}},x:{ticks:{font:{size:10}},grid:{display:false}}}}
+  });
+}
+
+function applySort(l){
+  const s=document.getElementById('fSort').value;
+  if(s==='oldest')return[...l].sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
+  if(s==='name')return[...l].sort((a,b)=>a.name.localeCompare(b.name,'ar'));
+  if(s==='deal')return[...l].sort((a,b)=>{
+    const av=parseFloat((a.dealValue||'0').replace(/[^\d.]/g,''))||0;
+    const bv=parseFloat((b.dealValue||'0').replace(/[^\d.]/g,''))||0;
+    return bv-av;
+  });
+  if(s==='followup')return[...l].sort((a,b)=>needsFU(b)-needsFU(a));
+  return[...l].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+}
+
+function renderGrid(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const fs=document.getElementById('fStatus').value;
+  const fr=document.getElementById('fSource').value;
+  const fp=document.getElementById('fPriority').value;
+  let l=getList();
+  if(q)l=l.filter(c=>c.name.toLowerCase().includes(q)||c.phone.includes(q)||(c.note||'').toLowerCase().includes(q));
+  if(fs)l=l.filter(c=>c.status===fs);
+  if(fr)l=l.filter(c=>c.source===fr);
+  if(fp)l=l.filter(c=>(c.priority||'medium')===fp);
+  l=applySort(l);
+  if(!l.length){
+    document.getElementById('grid').innerHTML='<div class="empty"><div class="empty-ico">📋</div><h3>مفيش عملاء هنا</h3><p>ارفع شيت Excel أو أضف يدوي</p></div>';
+    return;
+  }
+  document.getElementById('grid').innerHTML=l.map(c=>{
+    const ni=nicheIdx(c.niche);
+    const statusBg=STBG[c.status]||'#F8FAFC';
+    const statusCol=STCOL[c.status]||'#64748B';
+    const msg=encodeURIComponent(c.customMsg||getMsg(c.weakness,c.name));
+    const fu=needsFU(c);
+    const av=initials(c.name);
+    const pri=c.priority||'medium';
+    const recentHistory=(c.history||[]).slice(-2).reverse();
+    return `<div class="card">
+      <div class="card-strip" style="background:${NC[ni]}"></div>
+      <div class="card-head">
+        <div class="card-avatar" style="background:${NC[ni]}">${av}</div>
+        <div class="card-info">
+          <div class="cname">${c.name}</div>
+          <div class="cniche">${NICO[ni]} ${c.niche} · ${c.source}</div>
+          ${c.createdAt?`<div class="cdate">أُضيف ${fmtDate(c.createdAt)}</div>`:''}
+          <span class="priority-badge ${priClass[pri]}">${priLabel[pri]}</span>
+          ${fu?'<div class="fu-badge"><div class="fu-dot"></div>فولو أب مطلوب</div>':''}
+          ${c.reminder&&!fu?`<div class="reminder-badge">📅 ${fmtDate(c.reminder)}</div>`:''}
+        </div>
+        <select class="ssel" style="color:${statusCol};background:${statusBg}" onchange="chgStatus('${c.id}',this.value)">
+          ${Object.entries(STATUSES).map(([k,v])=>`<option value="${k}"${c.status===k?' selected':''}>${v}</option>`).join('')}
+        </select>
+      </div>
+      <div class="card-body">
+        <div class="phone-row">📞 ${c.phone}</div>
+        ${c.weakness?`<div class="wtag">⚡ ${c.weakness}</div>`:''}
+        ${c.dealValue?`<div class="deal-tag">💰 ${c.dealValue}</div>`:''}
+        <div class="stag">${c.source}</div>
+        <div class="note-box" onclick="openNote('${c.id}')">${c.note||'<span class="note-ph">+ إضافة ملاحظة</span>'}</div>
+        ${recentHistory.length?`<div class="history-mini">${recentHistory.map(h=>`<div class="history-item"><div class="history-dot"></div><span>${fmtDateTime(h.date)} — ${h.text}</span></div>`).join('')}</div>`:''}
+      </div>
+      <div class="card-foot">
+        <a class="wa-btn" href="https://wa.me/${c.phone}?text=${msg}" target="_blank" onclick="markSent('${c.id}')">💬 واتساب</a>
+        <button class="icon-btn" onclick="showMsg('${c.id}')">رسالة</button>
+        <button class="icon-btn" onclick="openHistory('${c.id}')">📋</button>
+        <button class="survey-btn${c.surveyData?' survey-done':''}" onclick="openSurvey('${c.id}')" title="استبيان الإعلان">${c.surveyData?'📊 استبيان':'📋 استبيان'}</button>
+        <button class="edit-btn" onclick="openEdit('${c.id}')">✏️</button>
+        <button class="del-btn" onclick="delClient('${c.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderKanban(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const fr=document.getElementById('fSource').value;
+  const fp=document.getElementById('fPriority').value;
+  let l=getList();
+  if(q)l=l.filter(c=>c.name.toLowerCase().includes(q)||c.phone.includes(q));
+  if(fr)l=l.filter(c=>c.source===fr);
+  if(fp)l=l.filter(c=>(c.priority||'medium')===fp);
+  const cols=[
+    {key:'new',label:'جديد',color:'#64748B'},
+    {key:'sent',label:'تم الإرسال',color:'#0EA5E9'},
+    {key:'replied',label:'رد',color:'#F59E0B'},
+    {key:'interested',label:'مهتم',color:'#10B981'},
+    {key:'closed',label:'اتفقنا',color:'#8B5CF6'},
+    {key:'rejected',label:'مش مهتم',color:'#EF4444'},
+  ];
+  document.getElementById('kanban').innerHTML=cols.map(col=>{
+    const cards=l.filter(c=>c.status===col.key);
+    return `<div class="kb-col" data-status="${col.key}">
+      <div class="kb-head">
+        <div class="kb-title"><div class="kb-dot" style="background:${col.color}"></div>${col.label}</div>
+        <span class="kb-cnt">${cards.length}</span>
+      </div>
+      <div class="kb-body" data-status="${col.key}"
+        ondragover="kbDragOver(event)" ondragleave="kbDragLeave(event)" ondrop="kbDrop(event,'${col.key}')">
+        ${cards.length?cards.map(c=>mkKbCard(c)).join('')
+          :'<div style="text-align:center;padding:20px 10px;color:var(--text-3);font-size:12px;border-radius:var(--r);border:1px dashed var(--border-2)">لا يوجد</div>'}
+      </div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.kb-card').forEach(el=>{
+    el.addEventListener('dragstart',kbDragStart);
+    el.addEventListener('dragend',kbDragEnd);
+  });
+}
+
+function mkKbCard(c){
+  const ni=nicheIdx(c.niche);
+  const fu=needsFU(c);
+  const av=initials(c.name);
+  const msg=encodeURIComponent(c.customMsg||getMsg(c.weakness,c.name));
+  return `<div class="kb-card" draggable="true" data-id="${c.id}">
+    <div class="kb-strip" style="background:${NC[ni]}"></div>
+    <div class="kb-top">
+      <div class="kb-av" style="background:${NC[ni]}">${av}</div>
+      <div style="flex:1;min-width:0">
+        <div class="kb-name">${c.name}</div>
+        <div class="kb-niche">${NICO[ni]} ${c.niche} · ${c.source}</div>
+      </div>
+    </div>
+    <div class="kb-body-inner">
+      <div class="kb-phone">${c.phone}</div>
+      ${c.weakness?`<div class="kb-weak">⚡ ${c.weakness}</div>`:''}
+      ${c.dealValue?`<div class="kb-deal">💰 ${c.dealValue}</div>`:''}
+      ${fu?'<div class="kb-fu"><div class="fu-dot"></div>فولو أب مطلوب</div>':''}
+      ${c.note?`<div style="font-size:10px;color:var(--text-3);border-top:1px solid var(--border);padding-top:5px;margin-top:3px">${c.note}</div>`:''}
+    </div>
+    <div class="kb-foot">
+      <a class="kb-wa" href="https://wa.me/${c.phone}?text=${msg}" target="_blank" onclick="markSent('${c.id}')">💬 واتساب</a>
+      <button class="kb-msg" onclick="openEdit('${c.id}')">✏️</button>
+      <button class="kb-del" onclick="delClient('${c.id}')">✕</button>
+    </div>
+  </div>`;
+}
+
+// ── Drag & Drop ──
+let dragId=null;
+function kbDragStart(e){dragId=e.currentTarget.dataset.id;e.currentTarget.classList.add('dragging');e.dataTransfer.effectAllowed='move';}
+function kbDragEnd(e){e.currentTarget.classList.remove('dragging');document.querySelectorAll('.kb-body').forEach(b=>b.classList.remove('drag-over'));}
+function kbDragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';e.currentTarget.classList.add('drag-over');}
+function kbDragLeave(e){e.currentTarget.classList.remove('drag-over');}
+function kbDrop(e,status){
+  e.preventDefault();e.currentTarget.classList.remove('drag-over');
+  if(!dragId)return;
+  const c=clients.find(x=>x.id===dragId);
+  if(c&&c.status!==status){
+    addAutoHistory(c,`تغيرت الحالة من "${STATUSES[c.status]}" إلى "${STATUSES[status]}"`);
+    c.status=status;c.lastContact=new Date().toISOString();
+    save();renderAll();
+  }
+  dragId=null;
+}
+
+function chgStatus(id,st){
+  const c=clients.find(x=>x.id===id);
+  if(c){
+    addAutoHistory(c,`تغيرت الحالة من "${STATUSES[c.status]}" إلى "${STATUSES[st]}"`);
+    c.status=st;c.lastContact=new Date().toISOString();
+    save();renderAll();
+  }
+}
+function markSent(id){
+  const c=clients.find(x=>x.id===id);
+  if(c&&c.status==='new'){
+    addAutoHistory(c,'تم إرسال رسالة واتساب');
+    c.status='sent';c.lastContact=new Date().toISOString();
+    save();renderAll();
+  }
+}
+
+function addAutoHistory(c,text){
+  if(!c.history)c.history=[];
+  c.history.push({date:new Date().toISOString(),text,auto:true});
+}
+
+// ── DELETE WITH UNDO ──
+function delClient(id){
+  const idx=clients.findIndex(x=>x.id===id);
+  if(idx<0)return;
+  deletedClient={...clients[idx]};
+  deletedIndex=idx;
+  clients.splice(idx,1);
+  save();renderAll();
+  showToast('تم حذف '+deletedClient.name);
+}
+function showToast(msg){
+  clearTimeout(toastTimer);
+  document.getElementById('toastMsg').textContent=msg;
+  document.getElementById('toast').classList.add('show');
+  toastTimer=setTimeout(()=>{document.getElementById('toast').classList.remove('show');deletedClient=null;},5000);
+}
+function undoDelete(){
+  if(!deletedClient)return;
+  clients.splice(deletedIndex,0,deletedClient);
+  deletedClient=null;
+  document.getElementById('toast').classList.remove('show');
+  save();renderAll();
+}
+
+// ── NOTE ──
+function openNote(id){noteId=id;document.getElementById('noteInput').value=clients.find(x=>x.id===id)?.note||'';document.getElementById('noteOverlay').classList.add('open');}
+function saveNote(){const c=clients.find(x=>x.id===noteId);if(c){c.note=document.getElementById('noteInput').value.trim();save();renderAll();}closeOv('noteOverlay');}
+
+// ── MESSAGE ──
+function showMsg(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  currentMsgId=id;
+  currentMsg=c.customMsg||getMsg(c.weakness,c.name);
+  originalMsg=getMsg(c.weakness,c.name);
+  document.getElementById('msgPreview').value=currentMsg;
+  document.getElementById('msgOverlay').classList.add('open');
+}
+function copyMsg(){
+  currentMsg=document.getElementById('msgPreview').value;
+  navigator.clipboard.writeText(currentMsg).then(()=>{
+    const b=document.querySelector('.copy-btn');b.textContent='تم النسخ ✓';
+    setTimeout(()=>b.textContent='نسخ الرسالة',2000);
+  });
+}
+function resetMsg(){document.getElementById('msgPreview').value=originalMsg;currentMsg=originalMsg;}
+function saveEditedMsg(){
+  currentMsg=document.getElementById('msgPreview').value.trim();
+  const c=clients.find(x=>x.id===currentMsgId);
+  if(c){c.customMsg=currentMsg;save();}
+  const btn=document.getElementById('msgSaveBtn');
+  if(btn){btn.textContent='تم الحفظ ✓';setTimeout(()=>btn.textContent='💾 حفظ التعديل',2000);}
+}
+
+// ── HISTORY ──
+function openHistory(id){
+  historyClientId=id;
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  document.getElementById('historyClientName').textContent='📌 '+c.name;
+  renderHistoryLog(c);
+  document.getElementById('historyInput').value='';
+  document.getElementById('historyOverlay').classList.add('open');
+}
+function renderHistoryLog(c){
+  const h=(c.history||[]).slice().reverse();
+  document.getElementById('historyLog').innerHTML=h.length
+    ?h.map(e=>`<div class="history-log-item">
+        <div class="hli-date">${fmtDateTime(e.date)}</div>
+        <div class="hli-text">${e.auto?'🤖 ':''} ${e.text}</div>
+      </div>`).join('')
+    :'<div style="padding:16px;text-align:center;font-size:12px;color:var(--text-3)">لا يوجد سجل بعد</div>';
+}
+function addHistoryEntry(){
+  const txt=document.getElementById('historyInput').value.trim();
+  if(!txt)return;
+  const c=clients.find(x=>x.id===historyClientId);if(!c)return;
+  if(!c.history)c.history=[];
+  c.history.push({date:new Date().toISOString(),text:txt});
+  c.lastContact=new Date().toISOString();
+  document.getElementById('historyInput').value='';
+  renderHistoryLog(c);
+  save();renderAll();
+}
+
+// ── ADD / EDIT ──
+function openAdd(){
+  document.getElementById('editId').value='';
+  document.getElementById('addOverlayTitle').textContent='➕ إضافة عميل جديد';
+  document.getElementById('addSaveBtn').textContent='إضافة العميل';
+  ['an','ap','anote'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('awk').value='';
+  document.getElementById('adeal').value='';
+  document.getElementById('areminder').value='';
+  document.getElementById('apri').value='medium';
+  document.getElementById('addOverlay').classList.add('open');
+}
+function openEdit(id){
+  const c=clients.find(x=>x.id===id);if(!c)return;
+  document.getElementById('editId').value=id;
+  document.getElementById('addOverlayTitle').textContent='✏️ تعديل بيانات العميل';
+  document.getElementById('addSaveBtn').textContent='حفظ التعديلات';
+  document.getElementById('an').value=c.name;
+  document.getElementById('ap').value=c.phone;
+  document.getElementById('anic').value=c.niche;
+  document.getElementById('asrc').value=c.source;
+  document.getElementById('apri').value=c.priority||'medium';
+  document.getElementById('adeal').value=c.dealValue||'';
+  document.getElementById('areminder').value=c.reminder||'';
+  document.getElementById('awk').value=c.weakness||'';
+  document.getElementById('anote').value=c.note||'';
+  document.getElementById('addOverlay').classList.add('open');
+}
+function saveClient(){
+  const name=document.getElementById('an').value.trim();
+  const phone=document.getElementById('ap').value.trim();
+  if(!name||!phone){alert('الاسم والرقم مطلوبين');return;}
+  const editId=document.getElementById('editId').value;
+  if(editId){
+    // Edit existing
+    const c=clients.find(x=>x.id===editId);
+    if(!c)return;
+    addAutoHistory(c,`تم تعديل البيانات`);
+    c.name=name;c.phone=phone;
+    c.niche=document.getElementById('anic').value;
+    c.source=document.getElementById('asrc').value;
+    c.priority=document.getElementById('apri').value;
+    c.dealValue=document.getElementById('adeal').value.trim();
+    c.reminder=document.getElementById('areminder').value;
+    c.weakness=document.getElementById('awk').value;
+    c.note=document.getElementById('anote').value;
+  } else {
+    // Add new
+    const existing=clients.find(c=>c.phone===phone);
+    if(existing){alert('الرقم ده موجود بالفعل: '+existing.name);return;}
+    clients.unshift({
+      id:Date.now().toString(),name,phone,
+      niche:document.getElementById('anic').value,
+      source:document.getElementById('asrc').value,
+      priority:document.getElementById('apri').value,
+      dealValue:document.getElementById('adeal').value.trim(),
+      reminder:document.getElementById('areminder').value,
+      weakness:document.getElementById('awk').value,
+      note:document.getElementById('anote').value,
+      status:'new',history:[],lastContact:null,
+      createdAt:new Date().toISOString(),customMsg:''
+    });
+  }
+  save();closeOv('addOverlay');renderAll();
+}
+
+function closeOv(id){document.getElementById(id).classList.remove('open');}
+['noteOverlay','msgOverlay','addOverlay','setupOverlay','historyOverlay','bulkOverlay'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeOv(id);});
+});
+
+// ── BULK SEND ──
+let bulkFilter='new';
+let bulkSending=false;
+
+function setBulkFilter(f,btn){
+  bulkFilter=f;
+  document.querySelectorAll('.bulk-filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  updateBulkSummary();
+}
+
+function getBulkClients(){
+  const exclude=['closed','rejected'];
+  if(bulkFilter==='new')return clients.filter(c=>c.status==='new');
+  if(bulkFilter==='sent')return clients.filter(c=>c.status==='sent');
+  return clients.filter(c=>!exclude.includes(c.status));
+}
+
+function updateBulkSummary(){
+  const list=getBulkClients();
+  const delay=parseInt(document.getElementById('bulkDelay').value);
+  const totalTime=Math.round(list.length*delay/1000);
+  const byNiche={};
+  list.forEach(c=>{byNiche[c.niche]=(byNiche[c.niche]||0)+1;});
+  const nicheStr=Object.entries(byNiche).map(([n,c])=>`${n}: ${c}`).join(' · ')||'—';
+  document.getElementById('bulkSummary').innerHTML=`
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:10px">
+      <div><div style="font-size:22px;font-weight:700;color:var(--accent)">${list.length}</div><div style="font-size:11px;color:var(--text-3)">عميل سيتم الإرسال له</div></div>
+      <div><div style="font-size:22px;font-weight:700;color:#10B981">${totalTime}s</div><div style="font-size:11px;color:var(--text-3)">وقت الإرسال التقريبي</div></div>
+    </div>
+    <div style="font-size:12px;color:var(--text-2)">📊 توزيع النيشات: <strong>${nicheStr}</strong></div>
+    ${list.length===0?'<div style="color:#EF4444;font-size:12px;margin-top:8px">⚠️ مفيش عملاء بهذا الفلتر</div>':''}
+  `;
+  document.getElementById('bulkStartBtn').disabled=list.length===0;
+}
+
+function openBulkSend(){
+  bulkFilter='new';
+  bulkSending=false;
+  document.querySelectorAll('.bulk-filter-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.getElementById('bulkProgress').style.display='none';
+  document.getElementById('bulkStartBtn').textContent='🚀 ابدأ الإرسال';
+  document.getElementById('bulkStartBtn').disabled=false;
+  updateBulkSummary();
+  document.getElementById('bulkOverlay').classList.add('open');
+}
+
+async function startBulkSend(){
+  if(bulkSending)return;
+  const list=getBulkClients();
+  if(!list.length){alert('مفيش عملاء للإرسال');return;}
+  const delay=parseInt(document.getElementById('bulkDelay').value);
+  bulkSending=true;
+  document.getElementById('bulkStartBtn').textContent='⏳ جاري الإرسال...';
+  document.getElementById('bulkStartBtn').disabled=true;
+  document.getElementById('bulkProgress').style.display='block';
+  let opened=0;
+  for(let i=0;i<list.length;i++){
+    const c=list[i];
+    const msg=encodeURIComponent(c.customMsg||getMsg(c.weakness,c.name));
+    const url=`https://wa.me/${c.phone}?text=${msg}`;
+    window.open(url,'_blank');
+    // mark as sent
+    if(c.status==='new'){
+      c.status='sent';
+      addAutoHistory(c,'تم الإرسال عبر زر إرسال الكل');
+      c.lastContact=new Date().toISOString();
+    }
+    opened++;
+    const pct=Math.round(opened/list.length*100);
+    document.getElementById('bulkProgressBar').style.width=pct+'%';
+    document.getElementById('bulkProgressText').textContent=`تم فتح ${opened} من ${list.length} — ${c.name}`;
+    if(i<list.length-1)await new Promise(r=>setTimeout(r,delay));
+  }
+  save();renderAll();
+  document.getElementById('bulkProgressText').textContent=`✅ تم فتح ${opened} محادثة بنجاح!`;
+  document.getElementById('bulkStartBtn').textContent='✅ تم الإرسال';
+  bulkSending=false;
+  setTimeout(()=>closeOv('bulkOverlay'),2000);
+}
+
+// ── EXCEL IMPORT ──
+function handleFile(e){
+  const file=e.target.files[0];if(!file)return;e.target.value='';
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'binary'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      let added=0,start=0;
+      for(let i=0;i<Math.min(6,rows.length);i++){const r=rows[i].join('');if(r.includes('اسم')||r.includes('رقم')){start=i+1;break;}}
+      for(let i=start;i<rows.length;i++){
+        const r=rows[i];
+        const name=String(r[1]||r[0]||'').trim();
+        const phone=String(r[2]||r[1]||'').replace(/\D/g,'').trim();
+        if(!name||phone.length<9)continue;
+        if(clients.find(c=>c.phone===phone))continue;
+        clients.unshift(migrateClient({
+          id:Date.now().toString()+i,name,phone,
+          niche:NICHES.includes(String(r[3]||'').trim())?String(r[3]).trim():'غيره',
+          source:String(r[4]||'').trim()||'Ad Library',
+          weakness:String(r[5]||'').trim(),
+          dealValue:String(r[6]||'').trim(),
+          note:String(r[7]||'').trim(),
+          status:'new',lastContact:null,createdAt:new Date().toISOString()
+        }));
+        added++;
+      }
+      save();renderAll();alert('تم إضافة '+added+' عميل ✓');
+    }catch(err){alert('في مشكلة في الملف\n'+err.message);}
+  };
+  reader.readAsBinaryString(file);
+}
+
+// ── EXCEL EXPORT ──
+function exportExcel(){
+  if(!clients.length){alert('مفيش بيانات للتحميل');return;}
+  const rows=[['الاسم','الرقم','النيش','المصدر','نقطة الضعف','قيمة الصفقة','الحالة','الأولوية','ملاحظة','تاريخ الإضافة','آخر تواصل','تذكير']];
+  clients.forEach(c=>rows.push([
+    c.name,c.phone,c.niche,c.source,c.weakness||'',c.dealValue||'',
+    STATUSES[c.status]||c.status,priLabel[c.priority||'medium'],
+    c.note||'',c.createdAt?fmtDate(c.createdAt):'',
+    c.lastContact?fmtDate(c.lastContact):'',c.reminder||''
+  ]));
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=[22,18,12,14,24,14,14,12,28,12,12,12].map(w=>({wch:w}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'العملاء');
+  XLSX.writeFile(wb,`veo3_clients_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+// ── SURVEY ──
+const SURVEY_URL='https://albusinessa9-ux.github.io/Cinemaads/survey_final.html';
+const SURVEY_QUESTIONS=[
+  {key:'brand',   label:'🏷️ اسم العلامة التجارية',              type:'text',    ph:'مثال: صالون رانيا، مطعم الأصالة...'},
+  {key:'social',  label:'🔗 رابط السوشيال ميديا أو الموقع',      type:'text',    ph:'https://instagram.com/...'},
+  {key:'product', label:'🎯 المنتجات أو الخدمات المحددة',         type:'textarea',ph:'اذكر الخدمة أو المنتج بالتفصيل...'},
+  {key:'audience',label:'👤 من هو العميل المستهدف؟',              type:'textarea',ph:'مثال: سيدات 25-45 سنة مهتمات بالعناية...'},
+  {key:'problem', label:'🔍 المشكلة التي يحلها المنتج أو الخدمة', type:'textarea',ph:'اذكر المشكلة التي يعاني منها عميلك...'},
+  {key:'advantage',label:'✨ الميزة التنافسية',                   type:'textarea',ph:'لماذا يختار العميل خدمتك دون المنافسين...'},
+  {key:'trust',   label:'🏆 إثبات الثقة والنجاح',                 type:'textarea',ph:'مثال: 10 سنوات خبرة، 5000+ عميل، تقييم 4.9...'},
+  {key:'goal',    label:'🎯 هدف الإعلان',                         type:'options', options:['💬 استفسارات','💰 مبيعات','👥 متابعين','📅 حجز أونلاين','🌐 زيارة الموقع']},
+  {key:'offer',   label:'🎁 العرض أو الخصم الترويجي',             type:'textarea',ph:'مثال: خصم 20٪ لأول 10 عملاء...'},
+  {key:'phrases', label:'💬 عبارات تريد ذكرها في الإعلان',        type:'textarea',ph:'اكتب أي جمل أو شعارات تريدها...'},
+  {key:'focus',   label:'📌 نقاط مهمة للتركيز عليها',             type:'textarea',ph:'أي تفاصيل إضافية أو نقاط أساسية...'},
+  {key:'model',   label:'🎭 شخصية الإعلان (الموديل)',              type:'options', options:['👦 شاب','👧 شابة','👩 امرأة ناضجة','👨 رجل ناضج','🧒 طفل','❓ غير محدد']},
+  {key:'dialect', label:'🌍 اللهجة المطلوبة',                      type:'options', options:['🇪🇬 مصرية','🇸🇦 خليجية','🇸🇾 شامية','🇱🇧 لبنانية','📖 فصحى','🇬🇧 إنجليزي']},
+];
+
+let surveyClientId=null;
+let surveyAnswers={};
+
+function openSurvey(id){
+  surveyClientId=id;
+  const c=clients.find(x=>x.id===id);
+  if(!c)return;
+  document.getElementById('surveyClientName').textContent='العميل: '+c.name+' · '+c.niche;
+  const hasSurvey=c.surveyData&&Object.keys(c.surveyData).length>0;
+  document.getElementById('surveyFilledPage').style.display=hasSurvey?'':'none';
+  document.getElementById('surveyFormPage').style.display=hasSurvey?'none':'';
+  if(hasSurvey){
+    renderSurveyDataPage(c.surveyData);
+  } else {
+    surveyAnswers={brand:c.name};
+    renderSurveyForm();
+  }
+  document.getElementById('surveyPage').classList.add('open');
+  window.scrollTo(0,0);
+}
+
+function closeSurveyPage(){
+  document.getElementById('surveyPage').classList.remove('open');
+  surveyClientId=null;
+  surveyAnswers={};
+}
+
+function renderSurveyDataPage(data){
+  const el=document.getElementById('surveyDataViewPage');
+  el.innerHTML=SURVEY_QUESTIONS.map(q=>{
+    const val=data[q.key]||'—';
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 18px;box-shadow:var(--sh)">
+      <div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">${q.label}</div>
+      <div style="font-size:14px;color:var(--text-1);font-weight:500;line-height:1.6">${val}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderSurveyForm(){
+  const html=SURVEY_QUESTIONS.map((q,i)=>{
+    const val=surveyAnswers[q.key]||'';
+    let inputHtml='';
+    if(q.type==='text'){
+      inputHtml=`<input class="sq-input" type="text" placeholder="${q.ph||''}" value="${val.replace(/"/g,'&quot;')}" oninput="surveyAnswers['${q.key}']=this.value;updateSurveyProgress()">`;
+    } else if(q.type==='textarea'){
+      inputHtml=`<textarea class="sq-input" placeholder="${q.ph||''}" oninput="surveyAnswers['${q.key}']=this.value;updateSurveyProgress()" rows="3">${val}</textarea>`;
+    } else if(q.type==='options'){
+      inputHtml=`<div class="sq-options">${q.options.map(opt=>`<button class="sq-opt${val===opt?' selected':''}" onclick="selectSurveyOpt('${q.key}',this,'${opt}')">${opt}</button>`).join('')}</div>`;
+    }
+    return `<div class="sq-block">
+      <div class="sq-num">سؤال ${i+1} من ${SURVEY_QUESTIONS.length}</div>
+      <div class="sq-label">${q.label}</div>
+      ${inputHtml}
+    </div>`;
+  }).join('');
+  document.getElementById('surveyBodyPage').innerHTML=html;
+  updateSurveyProgress();
+}
+
+function selectSurveyOpt(key,btn,val){
+  surveyAnswers[key]=val;
+  btn.closest('.sq-options').querySelectorAll('.sq-opt').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  updateSurveyProgress();
+}
+
+function updateSurveyProgress(){
+  const filled=SURVEY_QUESTIONS.filter(q=>surveyAnswers[q.key]&&surveyAnswers[q.key].toString().trim()).length;
+  const pct=Math.round(filled/SURVEY_QUESTIONS.length*100);
+  document.getElementById('surveyProgressFill').style.width=pct+'%';
+  document.getElementById('surveyProgressTxt').textContent=`${filled} / ${SURVEY_QUESTIONS.length} سؤال`;
+}
+
+function sendSurveyWaPage(){
+  const c=clients.find(x=>x.id===surveyClientId);
+  if(!c)return;
+  const ref=btoa(c.id).replace(/=/g,'');
+  // نحط الـ Gist ID في الرابط عشان الاستبيان يبعت البيانات صح
+  const gistParam=GIST_ID?`&gist=${GIST_ID}&token=${GIST_TOKEN}`:'';
+  const link=`${SURVEY_URL}?ref=${ref}${gistParam}`;
+  const msg=encodeURIComponent(`السلام عليكم ${c.name} 👋
+عشان نجهزلك الإعلان السينمائي، محتاجين منك دقيقتين بس تملأ الاستبيان ده:
+
+${link}
+
+بعد ما تخلص، هنتواصل معك بالمشاهد الجاهزة 🎬`);
+  window.open(`https://wa.me/${c.phone}?text=${msg}`,'_blank');
+  addAutoHistory(c,'تم إرسال رابط الاستبيان على واتساب');
+  save();renderAll();
+  closeSurveyPage();
+}
+
+function clearSurveyPage(){
+  if(!confirm('هتمسح بيانات الاستبيان — متأكد؟'))return;
+  const c=clients.find(x=>x.id===surveyClientId);
+  if(c){delete c.surveyData;save();renderAll();}
+  closeSurveyPage();
+}
+
+// فحص بيانات الاستبيان الواردة من الـ Gist
+async function checkIncomingSurveys(){
+  if(!GIST_TOKEN||!GIST_ID)return;
+  try{
+    const r=await fetch(`https://api.github.com/gists/${GIST_ID}`,{
+      headers:{Authorization:`token ${GIST_TOKEN}`,Accept:'application/vnd.github+json'}
+    });
+    if(!r.ok)return;
+    const data=await r.json();
+    const raw=data.files?.['veo3_surveys.json']?.content;
+    if(!raw)return;
+    const surveys=JSON.parse(raw);
+    let updated=false;
+    surveys.forEach(s=>{
+      const ref=s.ref;
+      const c=clients.find(x=>btoa(x.id).replace(/=/g,'')===ref);
+      if(c&&(!c.surveyData||!c.surveyData._ts||c.surveyData._ts<s._ts)){
+        c.surveyData=s;
+        addAutoHistory(c,'✅ العميل ملأ استبيان الإعلان تلقائياً');
+        updated=true;
+        if(Notification.permission==='granted'){
+          new Notification(`📋 استبيان جديد — ${c.name}`,{
+            body:'العميل ملأ الاستبيان — البيانات جاهزة 🎬',
+            icon:'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📋</text></svg>',
+            tag:`survey-${c.id}`
+          });
+        }
+      }
+    });
+    if(updated){save();renderAll();}
+  }catch(e){}
+}
+
+
+// ── NOTIFICATIONS ──
+function updateNotifBtn(){
+  const btn=document.getElementById('notifBtn');
+  const txt=document.getElementById('notifBtnText');
+  if(!('Notification' in window)){if(btn)btn.style.display='none';return;}
+  if(Notification.permission==='granted'){
+    if(btn){btn.style.background='#F0FDF4';btn.style.color='#15803D';btn.style.borderColor='#BBF7D0';}
+    if(txt)txt.textContent='الإشعارات مفعّلة ✓';
+  } else if(Notification.permission==='denied'){
+    if(btn){btn.style.background='#FEF2F2';btn.style.color='#B91C1C';btn.style.borderColor='#FECACA';}
+    if(txt)txt.textContent='الإشعارات محظورة ⚠️';
+  }
+}
+
+async function requestNotifPermission(){
+  if(!('Notification' in window)){alert('متصفحك مش بيدعم الإشعارات');return;}
+  if(Notification.permission==='granted'){checkFollowUps(true);return;}
+  if(Notification.permission==='denied'){
+    alert('الإشعارات محظورة — روح إعدادات المتصفح وفعّلها يدوي للموقع ده');return;
+  }
+  const perm=await Notification.requestPermission();
+  updateNotifBtn();
+  if(perm==='granted'){
+    new Notification('Veo 3 Dashboard 🎬',{
+      body:'تم تفعيل الإشعارات — هتوصلك تذكير بكل فولو أب مطلوب ✅',
+      icon:'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>'
+    });
+    checkFollowUps(false);
+  }
+}
+
+function checkFollowUps(showSummary=false){
+  if(Notification.permission!=='granted')return;
+  const due=clients.filter(needsFU);
+  if(!due.length){
+    if(showSummary)new Notification('Veo 3 Dashboard ✅',{body:'مفيش فولو أب مطلوب دلوقتي — شغال منيح! 💪'});
+    return;
+  }
+  const names=due.slice(0,3).map(c=>c.name).join('، ');
+  const extra=due.length>3?` و${due.length-3} أكتر`:'';
+  new Notification(`🔔 ${due.length} فولو أب مطلوب — Veo 3`,{
+    body:`${names}${extra}\nافتح الداشبورد وابدأ المتابعة!`,
+    icon:'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔔</text></svg>',
+    tag:'veo3-followup',
+    requireInteraction:true
+  });
+  due.filter(c=>c.priority==='high').slice(0,3).forEach((c,i)=>{
+    setTimeout(()=>{
+      new Notification(`🔴 فولو أب عاجل — ${c.name}`,{
+        body:`${c.niche} · ${c.source}\n${c.note||'اتواصل معاه دلوقتي'}`,
+        icon:'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔴</text></svg>',
+        tag:`veo3-high-${c.id}`
+      });
+    },(i+1)*1500);
+  });
+}
+
+function startNotifScheduler(){
+  updateNotifBtn();
+  if(Notification.permission==='granted'){
+    setTimeout(()=>checkFollowUps(false),3000);
+    setInterval(()=>checkFollowUps(false),60*60*1000);
+  }
+  // فحص الاستبيانات الواردة كل 5 دقايق
+  setTimeout(()=>checkIncomingSurveys(),5000);
+  setInterval(()=>checkIncomingSurveys(),5*60*1000);
+}
+
+cloudLoad().then(()=>startNotifScheduler());
+</script>
+</body>
+</html>
