@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>سينمادز — استبيان إعلانك</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F4F6F9;--surface:#fff;--border:#E4E7ED;--border-2:#D0D5DE;
+  --accent:#C9A84C;--accent-dk:#A8872E;--accent-lt:#FBF5E6;
+  --text-1:#0F1623;--text-2:#4A5568;--text-3:#9AA5B4;
+  --r:12px;--sh:0 4px 24px rgba(0,0,0,.08);
+}
+body{font-family:'IBM Plex Sans Arabic',-apple-system,sans-serif;background:var(--bg);color:var(--text-1);min-height:100vh;padding:24px 16px 60px;}
+.wrap{max-width:600px;margin:0 auto;}
+
+.hdr{text-align:center;margin-bottom:32px;}
+.logo{width:64px;height:64px;background:linear-gradient(135deg,#C9A84C,#E8C96A);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 16px;box-shadow:0 4px 16px rgba(201,168,76,.35);}
+.hdr h1{font-size:22px;font-weight:700;margin-bottom:8px;}
+.hdr p{font-size:13px;color:var(--text-3);}
+
+.card{background:var(--surface);border-radius:var(--r);padding:22px 20px;box-shadow:var(--sh);border:1px solid var(--border);margin-bottom:14px;}
+.q-num{font-size:11px;font-weight:600;color:var(--accent);margin-bottom:5px;letter-spacing:.5px;}
+.q-label{font-size:14px;font-weight:600;color:var(--text-1);margin-bottom:12px;line-height:1.5;}
+
+input[type=text],textarea{width:100%;background:var(--bg);border:1.5px solid var(--border-2);border-radius:10px;padding:11px 13px;font-family:inherit;font-size:14px;color:var(--text-1);outline:none;transition:border .15s;resize:none;}
+input[type=text]:focus,textarea:focus{border-color:var(--accent);background:#fff;}
+textarea{min-height:80px;}
+
+.options{display:flex;flex-wrap:wrap;gap:8px;}
+.opt{padding:9px 15px;border-radius:999px;border:1.5px solid var(--border-2);background:var(--surface);color:var(--text-2);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;}
+.opt:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-lt);}
+.opt.selected{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+.btn-submit{width:100%;padding:15px;border-radius:var(--r);border:none;background:linear-gradient(135deg,#C9A84C,#E8C96A);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 16px rgba(201,168,76,.4);margin-top:8px;transition:all .2s;}
+.btn-submit:hover{background:linear-gradient(135deg,#A8872E,#C9A84C);transform:translateY(-1px);}
+
+.success{text-align:center;padding:50px 20px;background:var(--surface);border-radius:var(--r);box-shadow:var(--sh);}
+.success-icon{font-size:56px;margin-bottom:16px;}
+.success h2{font-size:20px;font-weight:700;margin-bottom:10px;}
+.success p{font-size:14px;color:var(--text-3);line-height:1.8;}
+</style>
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <div class="logo">🎬</div>
+    <h1>استبيان إعلان سينمائي من سينمادز</h1>
+    <p>دقيقتين بس للبدء في إعلانك السينمائي</p>
+  </div>
+
+  <div id="formArea">
+
+    <div class="card">
+      <div class="q-num">سؤال 1 من 13</div>
+      <div class="q-label">🏷️ اسم العلامة التجارية</div>
+      <input type="text" id="q_brand" placeholder="مثال: صالون رانيا، مطعم الأصالة...">
+    </div>
+
+    <div class="card">
+      <div class="q-num">سؤال 2 من 13</div>
+      <div class="q-label">🔗 رابط صفحة السوشيال ميديا أو الموقع الإلكتروني</div>
+      <input type="text" id="q_social" placeholder="https://instagram.com/...">
+    </div>
+
+    <div class="card">
+      <div class="q-num">سؤال 3 من 13</div>
+      <div class="q-label">🎯 المنتجات أو الخدمات المحددة التي تريد التركيز عليها</div>
+      <textarea id="q_product" placeholder="اذكر الخدمة أو المنتج بالتفصيل..."></textarea>
+    </div>
+
+    <div class="card">
+      <div class="q-num">سؤال 4 من 13</div>
+      <div class="q-label">👤 من هو العميل المستهدف وما أهم اهتماماته؟</div>
+      <textarea id="q_audience" placeholder="مثال: سيدات ٢٥-٤٥ سنة مهتمات بالعناية بالبشرة..."></textarea>
+    </div>
+
+    <div class="card">
+      <div class="q-num">سؤال 5 من 13</div>
+      <div class="q-label">🔍 ما المشكلة الأساسية التي يحلها منتجك أو خدمتك؟</div>
+      <textarea id="q_problem" placeholder="اذكر المشكلة التي يعاني منها عميلك..."></textarea>
+    </div>
+
+    <div class="card">
+      <div class="q-num">سؤال 6 من 13</div>
+      <div class="q-label">✨ الميزة التنافسية — لماذا يختار العميل خدمتك دون المنافسين؟</div>
+      <textarea id="q_advantage" placeholder="ميزتك التنافسية الرئيسية..."></textarea>
+    </div>
+
+    <div class="card">
+      <div class="q-num">سؤال 7 من 13</div>
+      <div class="q-label">🏆 إثبات الثقة والنجاح (سنوات خبرة، عدد عملاء، تقييمات، نتائج)</div>
+      <textarea id="q_trust" placeholder="مثال: ١٠ سنوات خبرة، ٥٠٠٠+ عميل، تقييم ٤.٩..."></textarea>
+    </div>
+
+    <div class="card">
+      <div class="q-num">سؤال 8 من 13</div>
+      <div class="q-label">🎯 ما هو الهدف الأساسي من الإعلان؟</div>
+      <div class="options" id="q_goal">
+        <button class="opt" onclick="selectOpt('q_goal',this)">💬 تلقي رسائل واستفسارات</button>
+        <button class="opt" onclick="selectOpt('q_goal',this)">💰 زيادة المبيعات</button>
+        <button class="opt" onclick="selectOpt('q_goal',this)">👥 زيادة المتابعين</button>
+        <button class="opt" onclick="selectOpt('q_goal',this)">📅 الحجز أونلاين</button>
+        <button class="opt" onclick="selectOpt('q_goal',this)">🌐 زيارة الموقع</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="q-num">سؤال 9 من 13</div>
+      <div class="q-label">🎁 ما هو العرض أو الخصم الترويجي؟</div>
+      <textarea id="q_offer" placeholder="مثال: خصم ٢٠٪ لأول ١٠ عملاء، استشارة مجانية..."></textarea>
+    </div>
+
+    <div class="card">
+      <div class="q-num">سؤال 10 من 13</div>
+      <div class="q-label">💬 العبارات أو الجمل التي تريد ذكرها في الإعلان</div>
+      <textarea id="q_phrases" placeholder="اكتب أي جمل أو شعارات تريدها في الفيديو..."></textarea>
+    </div>
+
+    <div class="card">
+      <div class="q-num">سؤال 11 من 13</div>
+      <div class="q-label">📌 نقاط مهمة تريد التركيز عليها في الفيديو</div>
+      <textarea id="q_focus" placeholder="أي تفاصيل إضافية أو نقاط أساسية..."></textarea>
+    </div>
+
+    <div class="card">
+      <div class="q-num">سؤال 12 من 13</div>
+      <div class="q-label">🎭 اختيار شخصية الإعلان (الموديل)</div>
+      <div class="options" id="q_model">
+        <button class="opt" onclick="selectOpt('q_model',this)">👦 شاب</button>
+        <button class="opt" onclick="selectOpt('q_model',this)">👧 شابة</button>
+        <button class="opt" onclick="selectOpt('q_model',this)">👩 امرأة ناضجة</button>
+        <button class="opt" onclick="selectOpt('q_model',this)">👨 رجل ناضج</button>
+        <button class="opt" onclick="selectOpt('q_model',this)">🧒 طفل</button>
+        <button class="opt" onclick="selectOpt('q_model',this)">❓ غير محدد</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="q-num">سؤال 13 من 13</div>
+      <div class="q-label">🌍 ما هي اللهجة المطلوبة؟</div>
+      <div class="options" id="q_dialect">
+        <button class="opt" onclick="selectOpt('q_dialect',this)">🇪🇬 مصرية</button>
+        <button class="opt" onclick="selectOpt('q_dialect',this)">🇸🇦 خليجية</button>
+        <button class="opt" onclick="selectOpt('q_dialect',this)">🇸🇾 شامية</button>
+        <button class="opt" onclick="selectOpt('q_dialect',this)">🇱🇧 لبنانية</button>
+        <button class="opt" onclick="selectOpt('q_dialect',this)">📖 فصحى بسيطة</button>
+        <button class="opt" onclick="selectOpt('q_dialect',this)">🇬🇧 إنجليزي</button>
+      </div>
+    </div>
+
+    <button class="btn-submit" onclick="submit()">🎬 إرسال البيانات</button>
+  </div>
+
+  <div id="successArea" style="display:none">
+    <div class="success">
+      <div class="success-icon">🎬</div>
+      <h2>تم إرسال البيانات بنجاح!</h2>
+      <p>فريق سينمادز استلم معلومات إعلانك<br>وهيتواصل معك قريباً بالمشاهد الجاهزة ✅</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const ref=new URLSearchParams(location.search).get('ref')||'';
+const answers={};
+
+function selectOpt(groupId,el){
+  document.querySelectorAll(`#${groupId} .opt`).forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  answers[groupId.replace('q_','')]=el.textContent.trim();
+}
+
+async function submit(){
+  // تجميع الإجابات النصية
+  ['brand','social','product','audience','problem','advantage','trust','offer','phrases','focus'].forEach(k=>{
+    const el=document.getElementById('q_'+k);
+    if(el)answers[k]=el.value.trim();
+  });
+
+  // تحقق من الاسم على الأقل
+  if(!answers.brand){
+    alert('من فضلك اكتب اسم العلامة التجارية');
+    document.getElementById('q_brand').focus();
+    return;
+  }
+
+  const btn=document.querySelector('.btn-submit');
+  btn.textContent='⏳ جاري الإرسال...';
+  btn.disabled=true;
+
+  const payload={ref,_ts:Date.now(),_date:new Date().toLocaleString('ar-EG'),...answers};
+
+  const token=localStorage.getItem('veo3_gh_token')||'';
+  const gistId=localStorage.getItem('veo3_gist_id')||'';
+
+  if(token&&gistId){
+    try{
+      const r=await fetch(`https://api.github.com/gists/${gistId}`,{
+        headers:{Authorization:`token ${token}`,Accept:'application/vnd.github+json'}
+      });
+      if(r.ok){
+        const data=await r.json();
+        let surveys=[];
+        try{const raw=data.files?.['veo3_surveys.json']?.content;if(raw)surveys=JSON.parse(raw);}catch(e){}
+        const idx=surveys.findIndex(s=>s.ref===ref);
+        if(idx>=0)surveys[idx]=payload; else surveys.push(payload);
+        await fetch(`https://api.github.com/gists/${gistId}`,{
+          method:'PATCH',
+          headers:{Authorization:`token ${token}`,Accept:'application/vnd.github+json','Content-Type':'application/json'},
+          body:JSON.stringify({files:{'veo3_surveys.json':{content:JSON.stringify(surveys)}}})
+        });
+      }
+    }catch(e){}
+  }
+
+  document.getElementById('formArea').style.display='none';
+  document.getElementById('successArea').style.display='';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
